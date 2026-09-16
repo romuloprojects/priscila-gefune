@@ -123,8 +123,8 @@ export type EventRecord = {
   id: string;
   title: string;
   event_date: string;
-  reserve_from: string;
-  reserve_until: string;
+  reserve_from: string | null;
+  reserve_until: string | null;
   ceremony_venue: string | null;
   reception_venue: string | null;
   guest_count: number | null;
@@ -183,6 +183,41 @@ export type PackageItem = {
   event_type: string | null;
 };
 
+
+export type PackageDetailResponse = {
+  ok: true;
+  data: PackageItem & { intro_text?: string | null; closing_text?: string | null };
+  sections: Array<{
+    id: string;
+    section_key: string;
+    title: string;
+    sort_order: number;
+    show_default: boolean;
+  }>;
+  items: Array<{
+    id: string;
+    section_id: string | null;
+    inventory_item_id: string;
+    name: string;
+    quantity_mode: string;
+    default_quantity: number | string;
+    multiplier: number | string;
+    included_in_package: boolean;
+    show_default: boolean;
+    current_unit_price: number | string;
+  }>;
+  services: Array<{
+    id: string;
+    section_id: string | null;
+    service_id: string;
+    name: string;
+    included_in_package: boolean;
+    override_price: number | string | null;
+    current_price: number | string;
+    show_default: boolean;
+  }>;
+};
+
 export type Proposal = {
   id: string;
   proposal_number: number;
@@ -201,13 +236,32 @@ export type Proposal = {
 export type EventItemsResponse = {
   ok: true;
   event_id: string;
-  from: string;
-  until: string;
+  from: string | null;
+  until: string | null;
   items: Array<{
     inventory_item_id: string;
     name: string;
     quantity: number;
     default_unit_price: number | string;
+  }>;
+};
+
+
+export type EventDetailResponse = {
+  ok: true;
+  data: Omit<EventRecord, "event_type" | "client_name"> & {
+    event_type_id: string | null;
+    notes: string | null;
+    created_at?: string;
+    updated_at?: string;
+    client?: { id: string; name: string; phone: string | null } | null;
+    event_type?: { id: string; name: string; code: string } | null;
+  };
+  items: Array<{
+    inventory_item_id: string;
+    name: string;
+    quantity: number;
+    source: string;
   }>;
 };
 
@@ -233,6 +287,14 @@ export type ProposalDetail = {
     notes: string | null;
     event_id: string | null;
     client_id: string | null;
+    recipient_name: string | null;
+    recipient_phone: string | null;
+    recipient_email: string | null;
+    event_title_snapshot: string | null;
+    event_type_snapshot: string | null;
+    event_date_snapshot: string | null;
+    ceremony_venue_snapshot: string | null;
+    reception_venue_snapshot: string | null;
   };
   client: Client | null;
   event: Record<string, any> | null;
@@ -320,10 +382,15 @@ export const atelierApi = {
         method: "POST",
         body: JSON.stringify(body),
       }),
+    detail: (id: string) => requestJson<EventDetailResponse>(`/events/${id}`),
     update: (id: string, body: Record<string, unknown>) =>
       requestJson<{ ok: true; data: EventRecord }>(`/events/${id}`, {
         method: "PATCH",
         body: JSON.stringify(body),
+      }),
+    delete: (id: string) =>
+      requestJson<{ ok: true; deleted_id: string; title: string; detached_proposals: number }>(`/events/${id}`, {
+        method: "DELETE",
       }),
     items: (id: string) => requestJson<EventItemsResponse>(`/events/${id}/items`),
     saveItems: (id: string, items: Array<{ inventory_item_id: string; quantity: number }>) =>
@@ -369,6 +436,7 @@ export const atelierApi = {
 
   packages: {
     list: () => requestJson<{ ok: true; data: PackageItem[] }>("/packages"),
+    detail: (id: string) => requestJson<PackageDetailResponse>(`/packages/${id}`),
     update: (id: string, body: Record<string, unknown>) =>
       requestJson<{ ok: true; data: PackageItem }>(`/packages/${id}`, {
         method: "PATCH",

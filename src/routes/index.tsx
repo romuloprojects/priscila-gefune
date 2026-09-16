@@ -25,6 +25,7 @@ import {
   Search,
   Settings,
   Sparkles,
+  Trash2,
   UserPlus,
   Users,
   X,
@@ -50,8 +51,10 @@ import {
   type Client,
   type CompanySettings,
   type DashboardOverview,
+  type EventDetailResponse,
   type EventRecord,
   type InventoryItem,
+  type PackageDetailResponse,
   type PackageItem,
   type Proposal,
   type ProposalDetail,
@@ -329,7 +332,7 @@ function formatCurrency(value: number | string | null | undefined) {
 
 function eventStatusLabel(status: string) {
   const labels: Record<string, string> = {
-    draft: "Rascunho",
+    draft: "Planejado",
     quote: "Orçamento",
     sent: "Proposta enviada",
     confirmed: "Confirmado",
@@ -669,12 +672,14 @@ function EventsPage({
   openModal,
   announce,
   onReserve,
+  onDetail,
 }: {
   query: string;
   events: EventRecord[];
   openModal: (kind: ModalKind) => void;
   announce: (message: string) => void;
   onReserve: (event: EventRecord) => void;
+  onDetail: (eventId: string) => void;
 }) {
   const list = useMemo(() => {
     const q = query.trim().toLocaleLowerCase("pt-BR");
@@ -717,15 +722,18 @@ function EventsPage({
                 <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{place}</span>
                   <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{event.guest_count ?? "—"} convidados</span>
-                  <span className="flex items-center gap-1"><Package className="h-3.5 w-3.5" />Reserva: {formatDate(event.reserve_from)} a {formatDate(event.reserve_until)}</span>
+                  <span className="flex items-center gap-1"><Package className="h-3.5 w-3.5" />{event.reserve_from && event.reserve_until ? `Reserva: ${formatDate(event.reserve_from)} a ${formatDate(event.reserve_until)}` : "Sem reserva do acervo"}</span>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button variant="outline" className="h-9 px-4 text-xs" onClick={() => announce(`Evento ${event.title} carregado do PostgreSQL`)}>
+                <Button variant="outline" className="h-9 px-4 text-xs" onClick={() => onDetail(event.id)}>
                   Detalhes
                 </Button>
-                <Button className="h-9 bg-sand px-4 text-xs text-brand" onClick={() => onReserve(event)}>
-                  Itens / reserva
+                <Button
+                  className="h-9 bg-sand px-4 text-xs text-brand"
+                  onClick={() => event.reserve_from && event.reserve_until ? onReserve(event) : onDetail(event.id)}
+                >
+                  {event.reserve_from && event.reserve_until ? "Itens / reserva" : "Adicionar acervo"}
                 </Button>
               </div>
             </article>
@@ -1048,13 +1056,11 @@ function CatalogPriceRow({
 function SettingsPage({
   settings,
   packages,
-  services,
   announce,
   onRefresh,
 }: {
   settings: CompanySettings | null;
   packages: PackageItem[];
-  services: ServiceItem[];
   announce: (message: string) => void;
   onRefresh: () => Promise<void>;
 }) {
@@ -1101,32 +1107,14 @@ function SettingsPage({
     }
   };
 
-  const savePackagePrice = async (item: PackageItem, value: number) => {
-    try {
-      await atelierApi.packages.update(item.id, { default_price: value });
-      announce(`Valor do pacote “${item.name}” atualizado`);
-      await onRefresh();
-    } catch (error) {
-      announce(apiErrorMessage(error));
-    }
-  };
 
-  const saveServicePrice = async (item: ServiceItem, value: number) => {
-    try {
-      await atelierApi.services.update(item.id, { default_price: value });
-      announce(`Valor do serviço “${item.name}” atualizado`);
-      await onRefresh();
-    } catch (error) {
-      announce(apiErrorMessage(error));
-    }
-  };
 
   return (
     <>
       <PageHeader
         eyebrow="Preferências"
         title="Configurações"
-        description="Dados comerciais e preços padrão usados nas novas propostas. Propostas já criadas preservam seus valores históricos."
+        description="Dados institucionais e textos padrão da empresa. Valores de pacotes, serviços e locações são definidos na própria proposta."
       />
       <div className="grid gap-4 xl:grid-cols-[1.1fr_.9fr]">
         <form className="rounded-lg border border-border bg-card p-5 shadow-soft" onSubmit={saveSettings}>
@@ -1165,47 +1153,19 @@ function SettingsPage({
               <h3 className="mt-2 font-display text-2xl">{packages[0]?.name || "Pacote de evento"}</h3>
               <p className="mt-1 text-xs text-muted-foreground">A prévia e o PDF usam o mesmo conteúdo vindo do PostgreSQL.</p>
               <div className="mt-5 h-px bg-border" />
-              <div className="mt-4 flex items-end justify-between">
-                <span className="text-xs text-muted-foreground">Investimento padrão</span>
-                <strong className="font-display text-2xl">{formatCurrency(packages[0]?.default_price)}</strong>
+              <div className="mt-4 flex items-end justify-between gap-4">
+                <span className="text-xs text-muted-foreground">Investimento</span>
+                <strong className="text-right text-sm font-semibold text-brand">Definido em cada proposta</strong>
               </div>
             </div>
           </div>
         </aside>
       </div>
 
-      <section className="mt-4 grid gap-4 xl:grid-cols-2">
-        <article className="rounded-lg border border-border bg-card p-5 shadow-soft">
-          <h2 className="font-display text-2xl font-semibold">Pacotes e valores</h2>
-          <p className="mt-1 text-xs text-muted-foreground">O novo valor passa a valer somente para novas propostas.</p>
-          <div className="mt-3">
-            {packages.map((item) => (
-              <CatalogPriceRow
-                key={item.id}
-                title={item.name}
-                subtitle={item.event_type || item.description}
-                value={item.default_price}
-                onSave={(value) => savePackagePrice(item, value)}
-              />
-            ))}
-          </div>
-        </article>
-
-        <article className="rounded-lg border border-border bg-card p-5 shadow-soft">
-          <h2 className="font-display text-2xl font-semibold">Serviços e valores</h2>
-          <p className="mt-1 text-xs text-muted-foreground">Serviços incluídos no pacote podem permanecer com valor zero.</p>
-          <div className="mt-3 max-h-[520px] overflow-y-auto pr-1">
-            {services.map((item) => (
-              <CatalogPriceRow
-                key={item.id}
-                title={item.name}
-                subtitle={item.category_name}
-                value={item.default_price}
-                onSave={(value) => saveServicePrice(item, value)}
-              />
-            ))}
-          </div>
-        </article>
+      <section className="mt-4 rounded-lg border border-border bg-card p-5 shadow-soft">
+        <h2 className="font-display text-2xl font-semibold">Valores comerciais</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Pacotes, serviços e itens do acervo usam o catálogo apenas como referência. O valor efetivo é escolhido ao montar cada proposta, porque pode variar conforme evento, quantidade de convidados e negociação.</p>
+        <div className="mt-4 rounded-lg bg-sage px-4 py-3 text-xs text-success"><Check className="mr-2 inline h-4 w-4" />Ao criar uma proposta, você poderá marcar itens e serviços, ajustar quantidades e definir os valores daquela negociação sem alterar propostas antigas.</div>
       </section>
     </>
   );
@@ -1276,11 +1236,13 @@ function SelectField({
   name,
   options,
   required,
+  defaultValue,
 }: {
   label: string;
   name: string;
   options: Array<{ value: string; label: string }>;
   required?: boolean;
+  defaultValue?: string;
 }) {
   return (
     <label className="block">
@@ -1288,6 +1250,7 @@ function SelectField({
       <select
         name={name}
         required={required}
+        defaultValue={defaultValue ?? ""}
         className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
       >
         <option value="">Selecione</option>
@@ -1298,6 +1261,442 @@ function SelectField({
     </label>
   );
 }
+
+type ProposalDraftItemRow = {
+  inventoryItemId: string;
+  name: string;
+  description: string | null;
+  selected: boolean;
+  quantity: number;
+  unitPrice: number;
+  included: boolean;
+  reserveStock: boolean;
+  sectionKey: string;
+  sectionTitle: string;
+  quantityMode: string;
+  defaultQuantity: number;
+  multiplier: number;
+  packageDefined: boolean;
+};
+
+type ProposalDraftServiceRow = {
+  serviceId: string;
+  name: string;
+  description: string | null;
+  selected: boolean;
+  quantity: number;
+  unitPrice: number;
+  included: boolean;
+  sectionKey: string;
+  sectionTitle: string;
+  packageDefined: boolean;
+};
+
+function suggestedPackageQuantity(mode: string, defaultQuantity: number, multiplier: number, guests: number) {
+  if (mode === "per_guest") return Math.max(0, guests * multiplier);
+  if (mode === "per_table_4") return Math.max(0, Math.ceil(guests / 4) * multiplier);
+  return Math.max(0, defaultQuantity);
+}
+
+function ProposalCreateModal({
+  clients,
+  events,
+  packages,
+  inventory,
+  services,
+  settings,
+  onClose,
+  onSaved,
+  onCreated,
+  announce,
+}: {
+  clients: Client[];
+  events: EventRecord[];
+  packages: PackageItem[];
+  inventory: InventoryItem[];
+  services: ServiceItem[];
+  settings: CompanySettings | null;
+  onClose: () => void;
+  onSaved: () => Promise<void>;
+  onCreated: (proposalId: string) => void;
+  announce: (message: string) => void;
+}) {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [recipientMode, setRecipientMode] = useState<"client" | "contact">("contact");
+  const [clientId, setClientId] = useState("");
+  const [recipientName, setRecipientName] = useState("");
+  const [recipientPhone, setRecipientPhone] = useState("");
+  const [recipientEmail, setRecipientEmail] = useState("");
+  const [eventId, setEventId] = useState("");
+  const [eventTitle, setEventTitle] = useState("");
+  const [eventDate, setEventDate] = useState("");
+  const [ceremonyVenue, setCeremonyVenue] = useState("");
+  const [receptionVenue, setReceptionVenue] = useState("");
+  const [guestCount, setGuestCount] = useState(0);
+  const [packageId, setPackageId] = useState("");
+  const [packagePrice, setPackagePrice] = useState(0);
+  const [title, setTitle] = useState("");
+  const [packageDetail, setPackageDetail] = useState<PackageDetailResponse | null>(null);
+  const [loadingPackage, setLoadingPackage] = useState(false);
+  const [items, setItems] = useState<ProposalDraftItemRow[]>(() => inventory.map((item) => ({
+    inventoryItemId: item.id,
+    name: item.name,
+    description: item.description,
+    selected: false,
+    quantity: 1,
+    unitPrice: Number(item.default_unit_price || 0),
+    included: false,
+    reserveStock: true,
+    sectionKey: "itens_acervo",
+    sectionTitle: "Itens / acervo",
+    quantityMode: "manual",
+    defaultQuantity: 1,
+    multiplier: 1,
+    packageDefined: false,
+  })));
+  const [serviceRows, setServiceRows] = useState<ProposalDraftServiceRow[]>(() => services.map((service) => ({
+    serviceId: service.id,
+    name: service.name,
+    description: service.description,
+    selected: false,
+    quantity: 1,
+    unitPrice: Number(service.default_price || 0),
+    included: false,
+    sectionKey: "servicos",
+    sectionTitle: "Serviços",
+    packageDefined: false,
+  })));
+
+  useEffect(() => {
+    setItems((old) => inventory.map((item) => {
+      const existing = old.find((row) => row.inventoryItemId === item.id);
+      return existing ?? {
+        inventoryItemId: item.id,
+        name: item.name,
+        description: item.description,
+        selected: false,
+        quantity: 1,
+        unitPrice: Number(item.default_unit_price || 0),
+        included: false,
+        reserveStock: true,
+        sectionKey: "itens_acervo",
+        sectionTitle: "Itens / acervo",
+        quantityMode: "manual",
+        defaultQuantity: 1,
+        multiplier: 1,
+        packageDefined: false,
+      };
+    }));
+  }, [inventory]);
+
+  useEffect(() => {
+    setServiceRows((old) => services.map((service) => {
+      const existing = old.find((row) => row.serviceId === service.id);
+      return existing ?? {
+        serviceId: service.id,
+        name: service.name,
+        description: service.description,
+        selected: false,
+        quantity: 1,
+        unitPrice: Number(service.default_price || 0),
+        included: false,
+        sectionKey: "servicos",
+        sectionTitle: "Serviços",
+        packageDefined: false,
+      };
+    }));
+  }, [services]);
+
+  useEffect(() => {
+    if (!packageId) {
+      setPackageDetail(null);
+      setPackagePrice(0);
+      setItems((old) => old.map((row) => ({ ...row, selected: false, included: false, packageDefined: false, sectionKey: "itens_acervo", sectionTitle: "Itens / acervo", quantityMode: "manual", defaultQuantity: 1, multiplier: 1 })));
+      setServiceRows((old) => old.map((row) => ({ ...row, selected: false, included: false, packageDefined: false, sectionKey: "servicos", sectionTitle: "Serviços" })));
+      return;
+    }
+
+    const selectedPackage = packages.find((item) => item.id === packageId);
+    if (selectedPackage) {
+      setPackagePrice(Number(selectedPackage.default_price || 0));
+      if (!guestCount && selectedPackage.default_guest_count) setGuestCount(selectedPackage.default_guest_count);
+      if (!title) setTitle(selectedPackage.name);
+    }
+
+    let cancelled = false;
+    setLoadingPackage(true);
+    setError("");
+    void atelierApi.packages.detail(packageId)
+      .then((detail) => {
+        if (cancelled) return;
+        setPackageDetail(detail);
+        const sectionsById = new Map(detail.sections.map((section) => [section.id, section]));
+        const pkgItems = new Map(detail.items.map((item) => [item.inventory_item_id, item]));
+        const pkgServices = new Map(detail.services.map((service) => [service.service_id, service]));
+        const effectiveGuests = guestCount || detail.data.default_guest_count || 0;
+
+        setItems(inventory.map((item) => {
+          const packageItem = pkgItems.get(item.id);
+          const section = packageItem?.section_id ? sectionsById.get(packageItem.section_id) : undefined;
+          const mode = packageItem?.quantity_mode || "manual";
+          const defaultQuantity = Number(packageItem?.default_quantity ?? 1);
+          const multiplier = Number(packageItem?.multiplier ?? 1);
+          return {
+            inventoryItemId: item.id,
+            name: item.name,
+            description: item.description,
+            selected: Boolean(packageItem?.show_default),
+            quantity: packageItem ? suggestedPackageQuantity(mode, defaultQuantity, multiplier, effectiveGuests) : 1,
+            unitPrice: Number(packageItem?.current_unit_price ?? item.default_unit_price ?? 0),
+            included: Boolean(packageItem?.included_in_package),
+            reserveStock: true,
+            sectionKey: section?.section_key || "itens_acervo",
+            sectionTitle: section?.title || "Itens / acervo",
+            quantityMode: mode,
+            defaultQuantity,
+            multiplier,
+            packageDefined: Boolean(packageItem),
+          };
+        }));
+
+        setServiceRows(services.map((service) => {
+          const packageService = pkgServices.get(service.id);
+          const section = packageService?.section_id ? sectionsById.get(packageService.section_id) : undefined;
+          return {
+            serviceId: service.id,
+            name: service.name,
+            description: service.description,
+            selected: Boolean(packageService?.show_default),
+            quantity: 1,
+            unitPrice: Number(packageService?.override_price ?? packageService?.current_price ?? service.default_price ?? 0),
+            included: Boolean(packageService?.included_in_package),
+            sectionKey: section?.section_key || "servicos",
+            sectionTitle: section?.title || "Serviços",
+            packageDefined: Boolean(packageService),
+          };
+        }));
+      })
+      .catch((caught) => {
+        if (!cancelled) setError(apiErrorMessage(caught));
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingPackage(false);
+      });
+    return () => { cancelled = true; };
+  }, [packageId]);
+
+  useEffect(() => {
+    if (!packageDetail) return;
+    setItems((old) => old.map((row) => row.packageDefined ? {
+      ...row,
+      quantity: suggestedPackageQuantity(row.quantityMode, row.defaultQuantity, row.multiplier, guestCount),
+    } : row));
+  }, [guestCount, packageDetail]);
+
+  const selectEvent = (id: string) => {
+    setEventId(id);
+    const selected = events.find((item) => item.id === id);
+    if (!selected) return;
+    setEventTitle(selected.title || "");
+    setEventDate(selected.event_date?.slice(0, 10) || "");
+    setCeremonyVenue(selected.ceremony_venue || "");
+    setReceptionVenue(selected.reception_venue || "");
+    setGuestCount(selected.guest_count ?? 0);
+    if (selected.client_id) {
+      setRecipientMode("client");
+      setClientId(selected.client_id);
+    }
+  };
+
+  const totalPreview = useMemo(() => {
+    const itemTotal = items.filter((row) => row.selected && !row.included).reduce((sum, row) => sum + row.quantity * row.unitPrice, 0);
+    const serviceTotal = serviceRows.filter((row) => row.selected && !row.included).reduce((sum, row) => sum + row.quantity * row.unitPrice, 0);
+    return packagePrice + itemTotal + serviceTotal;
+  }, [items, serviceRows, packagePrice]);
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSaving(true);
+    setError("");
+    try {
+      const linkedClient = clients.find((client) => client.id === clientId);
+      if (recipientMode === "client" && !clientId) throw new AtelierApiError("Selecione o cliente da proposta.", "RECIPIENT_REQUIRED");
+      if (recipientMode === "contact" && !recipientName.trim()) throw new AtelierApiError("Informe o nome do contato da proposta.", "RECIPIENT_REQUIRED");
+
+      const sectionMap = new Map<string, { section_key: string; title: string; sort_order: number; show_in_pdf: boolean }>();
+      for (const section of packageDetail?.sections ?? []) {
+        sectionMap.set(section.section_key, { section_key: section.section_key, title: section.title, sort_order: section.sort_order, show_in_pdf: section.show_default });
+      }
+      for (const row of items.filter((item) => item.selected)) {
+        if (!sectionMap.has(row.sectionKey)) sectionMap.set(row.sectionKey, { section_key: row.sectionKey, title: row.sectionTitle, sort_order: 800, show_in_pdf: true });
+      }
+      for (const row of serviceRows.filter((service) => service.selected)) {
+        if (!sectionMap.has(row.sectionKey)) sectionMap.set(row.sectionKey, { section_key: row.sectionKey, title: row.sectionTitle, sort_order: 900, show_in_pdf: true });
+      }
+
+      const validDays = settings?.proposal_valid_days ?? 7;
+      const validDate = new Date();
+      validDate.setDate(validDate.getDate() + validDays);
+      const validUntil = `${validDate.getFullYear()}-${String(validDate.getMonth() + 1).padStart(2, "0")}-${String(validDate.getDate()).padStart(2, "0")}`;
+      const selectedPackage = packages.find((item) => item.id === packageId);
+      const hasRentalItems = items.some((row) => row.selected);
+
+      const result = await atelierApi.proposals.create({
+        client_id: recipientMode === "client" ? clientId : "",
+        recipient_name: recipientMode === "client" ? linkedClient?.name || "" : recipientName.trim(),
+        recipient_phone: recipientMode === "client" ? linkedClient?.phone || "" : recipientPhone.trim(),
+        recipient_email: recipientMode === "client" ? linkedClient?.email || "" : recipientEmail.trim(),
+        event_id: eventId,
+        event_title: eventTitle.trim(),
+        event_date: eventDate,
+        ceremony_venue: ceremonyVenue.trim(),
+        reception_venue: receptionVenue.trim(),
+        package_id: packageId,
+        package_price: packagePrice,
+        title: title.trim() || selectedPackage?.name || "Proposta personalizada",
+        guest_count: guestCount || "",
+        valid_until: validUntil,
+        document_template: selectedPackage?.name.toLocaleLowerCase("pt-BR").includes("locação") || (!packageId && hasRentalItems) ? "rental" : "package",
+        status: "draft",
+        sections: Array.from(sectionMap.values()),
+        items: items.filter((row) => row.selected).map((row, index) => ({
+          inventory_item_id: row.inventoryItemId,
+          name: row.name,
+          description: row.description,
+          quantity: row.quantity,
+          unit_price: row.included ? 0 : row.unitPrice,
+          billing_mode: row.included ? "included" : "unit",
+          show_in_pdf: true,
+          reserve_stock: row.reserveStock,
+          sort_order: index,
+          section_key: row.sectionKey,
+          section_title: row.sectionTitle,
+        })),
+        services: serviceRows.filter((row) => row.selected).map((row, index) => ({
+          service_id: row.serviceId,
+          name: row.name,
+          description: row.description,
+          quantity: row.quantity,
+          unit_price: row.included ? 0 : row.unitPrice,
+          billing_mode: row.included ? "included" : "unit",
+          show_in_pdf: true,
+          sort_order: index,
+          section_key: row.sectionKey,
+          section_title: row.sectionTitle,
+        })),
+      });
+
+      await onSaved();
+      announce(`Proposta #${result.data.proposal_number} criada e calculada`);
+      onClose();
+      onCreated(result.data.id);
+    } catch (caught) {
+      const message = apiErrorMessage(caught);
+      setError(message);
+      announce(message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[70] grid place-items-center bg-overlay px-3 py-3 sm:px-5 sm:py-5" role="dialog" aria-modal="true">
+      <form className="flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-border bg-card shadow-elevated" onSubmit={submit}>
+        <div className="flex items-start justify-between border-b border-border bg-peach px-5 py-4">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-brand">Nova proposta</p>
+            <h2 className="mt-1 flex items-center gap-2 font-display text-2xl font-semibold"><FileText className="h-5 w-5 text-brand" />Montar proposta comercial</h2>
+            <p className="mt-1 text-xs text-muted-foreground">Defina aqui os valores desta negociação. O catálogo serve apenas como referência inicial.</p>
+          </div>
+          <Button variant="icon" className="h-9 w-9" onClick={onClose} type="button" aria-label="Fechar"><X className="h-5 w-5" /></Button>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto p-5">
+          <div className="grid gap-5 xl:grid-cols-[.78fr_1.22fr]">
+            <aside className="space-y-4">
+              <section className="rounded-lg border border-border p-4">
+                <h3 className="font-display text-xl font-semibold">Destinatário</h3>
+                <div className="mt-3 grid grid-cols-2 gap-2 rounded-lg bg-muted/35 p-1">
+                  <button type="button" onClick={() => setRecipientMode("contact")} className={`rounded-md px-3 py-2 text-xs font-medium ${recipientMode === "contact" ? "bg-card shadow-soft text-brand" : "text-muted-foreground"}`}>Novo contato</button>
+                  <button type="button" onClick={() => setRecipientMode("client")} className={`rounded-md px-3 py-2 text-xs font-medium ${recipientMode === "client" ? "bg-card shadow-soft text-brand" : "text-muted-foreground"}`}>Cliente cadastrado</button>
+                </div>
+                <div className="mt-3 space-y-3">
+                  {recipientMode === "client" ? (
+                    <label className="block"><span className="text-xs font-semibold text-muted-foreground">Cliente</span><select value={clientId} onChange={(e) => setClientId(e.target.value)} className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"><option value="">Selecione</option>{clients.map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}</select></label>
+                  ) : (
+                    <>
+                      <ControlledField label="Nome do contato" value={recipientName} onChange={setRecipientName} />
+                      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2"><ControlledField label="Telefone" value={recipientPhone} onChange={setRecipientPhone} /><ControlledField label="E-mail" type="email" value={recipientEmail} onChange={setRecipientEmail} /></div>
+                    </>
+                  )}
+                </div>
+              </section>
+
+              <section className="rounded-lg border border-border p-4">
+                <h3 className="font-display text-xl font-semibold">Evento</h3>
+                <p className="mt-1 text-[10px] text-muted-foreground">Vincular um evento é opcional. A proposta pode nascer antes do cadastro definitivo.</p>
+                <label className="mt-3 block"><span className="text-xs font-semibold text-muted-foreground">Evento cadastrado (opcional)</span><select value={eventId} onChange={(e) => selectEvent(e.target.value)} className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"><option value="">Sem vínculo</option>{events.map((item) => <option key={item.id} value={item.id}>{formatDate(item.event_date)} · {item.title}</option>)}</select></label>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+                  <ControlledField label="Nome / tipo do evento" value={eventTitle} onChange={setEventTitle} />
+                  <ControlledField label="Data" type="date" value={eventDate} onChange={setEventDate} />
+                  <ControlledField label="Convidados" type="number" value={guestCount ? String(guestCount) : ""} onChange={(value) => setGuestCount(Math.max(0, Number(value || 0)))} />
+                  <ControlledField label="Local da cerimônia" value={ceremonyVenue} onChange={setCeremonyVenue} />
+                  <div className="sm:col-span-2 xl:col-span-1 2xl:col-span-2"><ControlledField label="Local da recepção" value={receptionVenue} onChange={setReceptionVenue} /></div>
+                </div>
+              </section>
+
+              <section className="rounded-lg border border-border p-4">
+                <h3 className="font-display text-xl font-semibold">Modelo e investimento</h3>
+                <label className="mt-3 block"><span className="text-xs font-semibold text-muted-foreground">Pacote / modelo (opcional)</span><select value={packageId} onChange={(e) => setPackageId(e.target.value)} className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"><option value="">Proposta personalizada</option>{packages.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+                  <ControlledField label="Título" value={title} onChange={setTitle} />
+                  <ControlledField label="Valor base do pacote" type="number" value={String(packagePrice)} onChange={(value) => setPackagePrice(Math.max(0, Number(value || 0)))} />
+                </div>
+                <div className="mt-4 rounded-lg bg-sand p-4">
+                  <div className="flex items-end justify-between"><span className="text-xs font-semibold uppercase tracking-wide text-brand">Total estimado</span><strong className="font-display text-3xl">{formatCurrency(totalPreview)}</strong></div>
+                  <p className="mt-1 text-[10px] text-muted-foreground">Pacote + itens e serviços cobrados à parte. O PostgreSQL recalcula o valor final ao salvar.</p>
+                </div>
+              </section>
+            </aside>
+
+            <div className="space-y-4">
+              <section className="rounded-lg border border-border p-4">
+                <div className="flex items-start justify-between gap-3"><div><h3 className="font-display text-xl font-semibold">Itens / locações</h3><p className="text-xs text-muted-foreground">Marque o que entra nesta proposta e ajuste quantidade e valor somente para esta negociação.</p></div>{loadingPackage && <RefreshCw className="mt-1 h-4 w-4 animate-spin text-brand" />}</div>
+                <div className="mt-3 max-h-[300px] overflow-auto rounded-lg border border-border">
+                  <table className="w-full min-w-[720px] text-left text-xs">
+                    <thead className="sticky top-0 bg-card text-muted-foreground"><tr><th className="p-2 font-medium">Usar</th><th className="p-2 font-medium">Item</th><th className="p-2 font-medium">Qtd.</th><th className="p-2 font-medium">Incluso</th><th className="p-2 font-medium">Valor unit.</th><th className="p-2 font-medium">Reservar</th></tr></thead>
+                    <tbody>{items.map((row, index) => <tr key={row.inventoryItemId} className="border-t border-border"><td className="p-2"><input type="checkbox" checked={row.selected} onChange={(e) => setItems((old) => old.map((item, i) => i === index ? { ...item, selected: e.target.checked } : item))} /></td><td className="p-2"><strong>{row.name}</strong>{row.packageDefined && <span className="ml-2 rounded-full bg-sage px-2 py-0.5 text-[9px] text-success">do pacote</span>}</td><td className="p-2"><input type="number" min="0" step="1" disabled={!row.selected} value={String(row.quantity)} onChange={(e) => setItems((old) => old.map((item, i) => i === index ? { ...item, quantity: Math.max(0, Number(e.target.value || 0)) } : item))} className="h-8 w-20 rounded border border-input bg-background px-2" /></td><td className="p-2"><input type="checkbox" disabled={!row.selected || !packageId} checked={row.included} onChange={(e) => setItems((old) => old.map((item, i) => i === index ? { ...item, included: e.target.checked } : item))} /></td><td className="p-2"><input type="number" min="0" step="0.01" disabled={!row.selected || row.included} value={String(row.unitPrice)} onChange={(e) => setItems((old) => old.map((item, i) => i === index ? { ...item, unitPrice: Math.max(0, Number(e.target.value || 0)) } : item))} className="h-8 w-28 rounded border border-input bg-background px-2" /></td><td className="p-2"><input type="checkbox" disabled={!row.selected} checked={row.reserveStock} onChange={(e) => setItems((old) => old.map((item, i) => i === index ? { ...item, reserveStock: e.target.checked } : item))} /></td></tr>)}</tbody>
+                  </table>
+                </div>
+              </section>
+
+              <section className="rounded-lg border border-border p-4">
+                <h3 className="font-display text-xl font-semibold">Serviços</h3>
+                <p className="text-xs text-muted-foreground">Serviços podem estar inclusos no pacote ou ser cobrados separadamente com um valor próprio para esta proposta.</p>
+                <div className="mt-3 max-h-[300px] overflow-auto rounded-lg border border-border">
+                  <table className="w-full min-w-[650px] text-left text-xs">
+                    <thead className="sticky top-0 bg-card text-muted-foreground"><tr><th className="p-2 font-medium">Usar</th><th className="p-2 font-medium">Serviço</th><th className="p-2 font-medium">Qtd.</th><th className="p-2 font-medium">Incluso</th><th className="p-2 font-medium">Valor</th></tr></thead>
+                    <tbody>{serviceRows.map((row, index) => <tr key={row.serviceId} className="border-t border-border"><td className="p-2"><input type="checkbox" checked={row.selected} onChange={(e) => setServiceRows((old) => old.map((service, i) => i === index ? { ...service, selected: e.target.checked } : service))} /></td><td className="p-2"><strong>{row.name}</strong>{row.packageDefined && <span className="ml-2 rounded-full bg-sage px-2 py-0.5 text-[9px] text-success">do pacote</span>}</td><td className="p-2"><input type="number" min="0" step="1" disabled={!row.selected} value={String(row.quantity)} onChange={(e) => setServiceRows((old) => old.map((service, i) => i === index ? { ...service, quantity: Math.max(0, Number(e.target.value || 0)) } : service))} className="h-8 w-20 rounded border border-input bg-background px-2" /></td><td className="p-2"><input type="checkbox" disabled={!row.selected || !packageId} checked={row.included} onChange={(e) => setServiceRows((old) => old.map((service, i) => i === index ? { ...service, included: e.target.checked } : service))} /></td><td className="p-2"><input type="number" min="0" step="0.01" disabled={!row.selected || row.included} value={String(row.unitPrice)} onChange={(e) => setServiceRows((old) => old.map((service, i) => i === index ? { ...service, unitPrice: Math.max(0, Number(e.target.value || 0)) } : service))} className="h-8 w-28 rounded border border-input bg-background px-2" /></td></tr>)}</tbody>
+                  </table>
+                </div>
+              </section>
+
+              <div className="rounded-lg bg-sage px-4 py-3 text-xs text-success"><Check className="mr-2 inline h-4 w-4" />Os valores acima ficam congelados nesta proposta. Alterar o catálogo depois não modifica a negociação já criada.</div>
+            </div>
+          </div>
+          {error && <div className="mt-4 rounded-lg bg-blush px-4 py-3 text-xs text-danger">{error}</div>}
+        </div>
+
+        <div className="flex items-center justify-between gap-3 border-t border-border px-5 py-4">
+          <p className="hidden text-xs text-muted-foreground sm:block">A proposta pode ser criada para um contato ainda não cadastrado como cliente.</p>
+          <div className="ml-auto flex gap-2"><Button variant="outline" className="h-10 px-4" onClick={onClose} type="button">Cancelar</Button><Button variant="primary" className="h-10 px-5" type="submit" disabled={saving}>{saving ? "Criando..." : "Criar proposta"}</Button></div>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 
 function EntityModal({
   state,
@@ -1370,17 +1769,22 @@ function EntityModal({
 
       if (kind === "event") {
         const date = value("event_date");
+        const reserveFrom = value("reserve_from");
+        const reserveUntil = value("reserve_until");
+        if (Boolean(reserveFrom) !== Boolean(reserveUntil)) {
+          throw new AtelierApiError("Preencha as duas datas da reserva ou deixe as duas em branco.", "RESERVATION_PERIOD_PAIR");
+        }
         await atelierApi.events.create({
           client_id: value("client_id"),
           event_type_code: value("event_type_code") || "OUTRO",
           title: value("title"),
           event_date: date,
-          reserve_from: value("reserve_from") || date,
-          reserve_until: value("reserve_until") || date,
+          reserve_from: reserveFrom,
+          reserve_until: reserveUntil,
           reception_venue: value("reception_venue"),
           ceremony_venue: value("ceremony_venue"),
           guest_count: value("guest_count"),
-          status: "draft",
+          status: value("status") || "confirmed",
           notes: value("notes"),
         });
       }
@@ -1466,8 +1870,26 @@ function EntityModal({
               <div className="sm:col-span-2"><Field label="Nome do evento" name="title" required placeholder="Ex.: Casamento Ana & Lucas" /></div>
               <Field label="Data do evento" name="event_date" type="date" required />
               <Field label="Convidados" name="guest_count" type="number" min="0" />
-              <Field label="Retirada / início da reserva" name="reserve_from" type="date" />
-              <Field label="Devolução / fim da reserva" name="reserve_until" type="date" />
+              <SelectField
+                label="Status"
+                name="status"
+                defaultValue="confirmed"
+                options={[
+                  { value: "quote", label: "Orçamento" },
+                  { value: "sent", label: "Proposta enviada" },
+                  { value: "confirmed", label: "Confirmado" },
+                  { value: "preparation", label: "Em preparação" },
+                  { value: "in_progress", label: "Em andamento" },
+                  { value: "completed", label: "Concluído" },
+                  { value: "cancelled", label: "Cancelado" },
+                ]}
+              />
+              <div className="hidden sm:block" />
+              <Field label="Retirada / início da reserva (opcional)" name="reserve_from" type="date" />
+              <Field label="Devolução / fim da reserva (opcional)" name="reserve_until" type="date" />
+              <div className="sm:col-span-2 rounded-lg border border-border bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
+                Preencha as duas datas somente quando este evento usar itens do acervo do Atelier. Eventos sem itens próprios podem ficar sem período de reserva.
+              </div>
               <Field label="Local da cerimônia" name="ceremony_venue" />
               <Field label="Local da recepção" name="reception_venue" />
               <div className="sm:col-span-2"><Field label="Observação" name="notes" /></div>
@@ -1515,6 +1937,227 @@ function ProposalPreview({ html, title, onClose }: { html: string; title: string
 }
 
 
+function EventDetailModal({
+  eventId,
+  clients,
+  onClose,
+  onSaved,
+  announce,
+}: {
+  eventId: string;
+  clients: Client[];
+  onClose: () => void;
+  onSaved: () => Promise<void>;
+  announce: (message: string) => void;
+}) {
+  const [detail, setDetail] = useState<EventDetailResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState("");
+  const [form, setForm] = useState({
+    title: "",
+    client_id: "",
+    event_date: "",
+    guest_count: "",
+    reserve_from: "",
+    reserve_until: "",
+    ceremony_venue: "",
+    reception_venue: "",
+    status: "confirmed",
+    notes: "",
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError("");
+    void atelierApi.events.detail(eventId)
+      .then((result) => {
+        if (cancelled) return;
+        setDetail(result);
+        const event = result.data;
+        setForm({
+          title: event.title ?? "",
+          client_id: event.client_id ?? "",
+          event_date: event.event_date?.slice(0, 10) ?? "",
+          guest_count: event.guest_count == null ? "" : String(event.guest_count),
+          reserve_from: event.reserve_from?.slice(0, 10) ?? "",
+          reserve_until: event.reserve_until?.slice(0, 10) ?? "",
+          ceremony_venue: event.ceremony_venue ?? "",
+          reception_venue: event.reception_venue ?? "",
+          status: event.status || "confirmed",
+          notes: event.notes ?? "",
+        });
+      })
+      .catch((caught) => {
+        if (!cancelled) setError(apiErrorMessage(caught));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [eventId]);
+
+  const change = (key: keyof typeof form, value: string) => {
+    setForm((old) => ({ ...old, [key]: value }));
+  };
+
+  const save = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError("");
+    if (Boolean(form.reserve_from) !== Boolean(form.reserve_until)) {
+      setError("Preencha as duas datas da reserva ou deixe as duas em branco.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await atelierApi.events.update(eventId, {
+        title: form.title,
+        client_id: form.client_id,
+        event_date: form.event_date,
+        guest_count: form.guest_count,
+        reserve_from: form.reserve_from,
+        reserve_until: form.reserve_until,
+        ceremony_venue: form.ceremony_venue,
+        reception_venue: form.reception_venue,
+        status: form.status,
+        notes: form.notes,
+      });
+      await onSaved();
+      announce("Evento atualizado com sucesso");
+      onClose();
+    } catch (caught) {
+      const message = apiErrorMessage(caught);
+      setError(message);
+      announce(message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const remove = async () => {
+    const title = detail?.data.title || "este evento";
+    if (!window.confirm(`Excluir definitivamente ${title}? As reservas de itens deste evento serão liberadas.`)) return;
+    setDeleting(true);
+    setError("");
+    try {
+      const result = await atelierApi.events.delete(eventId);
+      await onSaved();
+      announce(result.detached_proposals > 0
+        ? `Evento excluído. ${result.detached_proposals} proposta(s) permaneceram salvas sem vínculo com o evento.`
+        : "Evento excluído com sucesso");
+      onClose();
+    } catch (caught) {
+      const message = apiErrorMessage(caught);
+      setError(message);
+      announce(message);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[76] grid place-items-center bg-overlay px-4" role="dialog" aria-modal="true">
+      <form onSubmit={save} className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-border bg-card shadow-elevated">
+        <div className="flex items-start justify-between border-b border-border bg-peach px-5 py-4">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-brand">Detalhes do evento</p>
+            <h2 className="mt-1 font-display text-2xl font-semibold">{detail?.data.title || "Evento"}</h2>
+            {detail?.data.event_type && (
+              <p className="mt-1 text-xs text-muted-foreground">{detail.data.event_type.name}</p>
+            )}
+          </div>
+          <Button variant="icon" className="h-9 w-9" onClick={onClose} type="button" aria-label="Fechar"><X className="h-5 w-5" /></Button>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto p-5">
+          {loading ? (
+            <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground"><RefreshCw className="h-4 w-4 animate-spin" />Carregando detalhes do PostgreSQL...</div>
+          ) : detail ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block sm:col-span-2">
+                <span className="text-xs font-semibold text-muted-foreground">Nome do evento</span>
+                <input value={form.title} onChange={(e) => change("title", e.target.value)} required className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
+              </label>
+
+              <label className="block">
+                <span className="text-xs font-semibold text-muted-foreground">Cliente vinculado</span>
+                <select value={form.client_id} onChange={(e) => change("client_id", e.target.value)} className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring">
+                  <option value="">Sem cliente vinculado</option>
+                  {clients.map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="text-xs font-semibold text-muted-foreground">Status</span>
+                <select value={form.status} onChange={(e) => change("status", e.target.value)} className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring">
+                  <option value="draft">Planejado / não confirmado</option>
+                  <option value="quote">Orçamento</option>
+                  <option value="sent">Proposta enviada</option>
+                  <option value="confirmed">Confirmado</option>
+                  <option value="preparation">Em preparação</option>
+                  <option value="in_progress">Em andamento</option>
+                  <option value="completed">Concluído</option>
+                  <option value="cancelled">Cancelado</option>
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="text-xs font-semibold text-muted-foreground">Data do evento</span>
+                <input type="date" value={form.event_date} onChange={(e) => change("event_date", e.target.value)} required className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
+              </label>
+              <label className="block">
+                <span className="text-xs font-semibold text-muted-foreground">Convidados</span>
+                <input type="number" min="0" value={form.guest_count} onChange={(e) => change("guest_count", e.target.value)} className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
+              </label>
+
+              <label className="block">
+                <span className="text-xs font-semibold text-muted-foreground">Retirada / início da reserva (opcional)</span>
+                <input type="date" value={form.reserve_from} onChange={(e) => change("reserve_from", e.target.value)} className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
+              </label>
+              <label className="block">
+                <span className="text-xs font-semibold text-muted-foreground">Devolução / fim da reserva (opcional)</span>
+                <input type="date" value={form.reserve_until} onChange={(e) => change("reserve_until", e.target.value)} className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
+              </label>
+              <div className="sm:col-span-2 rounded-lg border border-border bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
+                O período de reserva é opcional. Só preencha quando houver itens do acervo do Atelier. {detail.items.length > 0 ? `Este evento possui ${detail.items.length} item(ns) reservado(s); remova-os antes de limpar as datas.` : "Sem itens do acervo reservados neste momento."}
+              </div>
+
+              <label className="block">
+                <span className="text-xs font-semibold text-muted-foreground">Local da cerimônia</span>
+                <input value={form.ceremony_venue} onChange={(e) => change("ceremony_venue", e.target.value)} className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
+              </label>
+              <label className="block">
+                <span className="text-xs font-semibold text-muted-foreground">Local da recepção</span>
+                <input value={form.reception_venue} onChange={(e) => change("reception_venue", e.target.value)} className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
+              </label>
+
+              <label className="block sm:col-span-2">
+                <span className="text-xs font-semibold text-muted-foreground">Observações</span>
+                <textarea value={form.notes} onChange={(e) => change("notes", e.target.value)} rows={4} className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
+              </label>
+            </div>
+          ) : null}
+          {error && <div className="mt-4 rounded-lg border border-danger/20 bg-blush px-4 py-3 text-xs text-danger">{error}</div>}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-background px-5 py-4">
+          <Button type="button" variant="outline" className="h-10 border-danger/30 px-4 text-danger hover:bg-blush" onClick={() => void remove()} disabled={loading || deleting || saving}>
+            <Trash2 className="h-4 w-4" />{deleting ? "Excluindo..." : "Excluir evento"}
+          </Button>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" className="h-10 px-4" onClick={onClose}>Fechar</Button>
+            <Button type="submit" variant="primary" className="h-10 px-5" disabled={loading || saving || deleting}>{saving ? "Salvando..." : "Salvar alterações"}</Button>
+          </div>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 function ReservationModal({
   event,
   inventory,
@@ -1534,8 +2177,17 @@ function ReservationModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  const hasReservationPeriod = Boolean(event.reserve_from && event.reserve_until);
+
   useEffect(() => {
     let cancelled = false;
+    if (!event.reserve_from || !event.reserve_until) {
+      setAvailability([]);
+      setQuantities({});
+      setLoading(false);
+      return () => { cancelled = true; };
+    }
+    setLoading(true);
     void Promise.all([
       atelierApi.events.items(event.id),
       atelierApi.inventory.availability(event.reserve_from, event.reserve_until, event.id),
@@ -1591,14 +2243,20 @@ function ReservationModal({
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-brand">Reserva de estoque</p>
             <h2 className="mt-1 font-display text-2xl font-semibold">{event.title}</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              {formatDate(event.reserve_from)} a {formatDate(event.reserve_until)} · disponibilidade calculada pelo PostgreSQL
+              {hasReservationPeriod ? `${formatDate(event.reserve_from)} a ${formatDate(event.reserve_until)} · disponibilidade calculada pelo PostgreSQL` : "Sem período de reserva do acervo"}
             </p>
           </div>
           <Button variant="icon" className="h-9 w-9" onClick={onClose} aria-label="Fechar"><X className="h-5 w-5" /></Button>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-5">
-          {loading ? (
+          {!hasReservationPeriod ? (
+            <div className="rounded-lg border border-border bg-muted/35 px-5 py-8 text-center">
+              <Package className="mx-auto h-7 w-7 text-brand" />
+              <h3 className="mt-3 font-display text-xl">Este evento não usa o acervo neste momento</h3>
+              <p className="mx-auto mt-2 max-w-lg text-sm text-muted-foreground">Defina retirada/início e devolução/fim da reserva em Detalhes somente se houver itens próprios do Atelier para bloquear no período.</p>
+            </div>
+          ) : loading ? (
             <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground"><RefreshCw className="h-4 w-4 animate-spin" />Carregando estoque e reservas...</div>
           ) : (
             <div className="overflow-hidden rounded-lg border border-border">
@@ -1641,7 +2299,7 @@ function ReservationModal({
 
         <div className="flex justify-end gap-2 border-t border-border px-5 py-4">
           <Button variant="outline" className="h-10 px-4" onClick={onClose}>Cancelar</Button>
-          <Button variant="primary" className="h-10 px-5" onClick={() => void save()} disabled={saving || loading}>{saving ? "Validando estoque..." : "Salvar reserva"}</Button>
+          <Button variant="primary" className="h-10 px-5" onClick={() => void save()} disabled={saving || loading || !hasReservationPeriod}>{saving ? "Validando estoque..." : "Salvar reserva"}</Button>
         </div>
       </div>
     </div>
@@ -1707,6 +2365,15 @@ function ProposalEditor({
         closing_text: detail.data.closing_text ?? "",
         payment_terms: detail.data.payment_terms ?? {},
         notes: detail.data.notes ?? "",
+        client_id: detail.data.client_id ?? "",
+        event_id: detail.data.event_id ?? "",
+        recipient_name: detail.data.recipient_name ?? detail.client?.name ?? "",
+        recipient_phone: detail.data.recipient_phone ?? detail.client?.phone ?? "",
+        recipient_email: detail.data.recipient_email ?? detail.client?.email ?? "",
+        event_title: detail.data.event_title_snapshot ?? detail.event?.title ?? "",
+        event_date: detail.data.event_date_snapshot ?? detail.event?.event_date ?? "",
+        ceremony_venue: detail.data.ceremony_venue_snapshot ?? detail.event?.ceremony_venue ?? "",
+        reception_venue: detail.data.reception_venue_snapshot ?? detail.event?.reception_venue ?? "",
         sections: detail.sections.map((section) => ({
           section_key: section.section_key,
           title: section.title,
@@ -1800,7 +2467,7 @@ function ProposalEditor({
             <h2 className="mt-1 font-display text-2xl font-semibold">
               {detail ? `#${detail.data.proposal_number} · ${detail.data.title}` : "Carregando proposta..."}
             </h2>
-            {detail && <p className="mt-1 text-xs text-muted-foreground">{detail.client?.name || "Cliente não vinculado"} · {detail.package?.name || "Proposta personalizada"}</p>}
+            {detail && <p className="mt-1 text-xs text-muted-foreground">{detail.client?.name || detail.data.recipient_name || "Contato não informado"} · {detail.package?.name || "Proposta personalizada"}</p>}
           </div>
           <Button variant="icon" className="h-9 w-9" onClick={onClose} aria-label="Fechar"><X className="h-5 w-5" /></Button>
         </div>
@@ -1810,6 +2477,20 @@ function ProposalEditor({
           {detail && (
             <div className="grid gap-5 xl:grid-cols-[.8fr_1.2fr]">
               <aside className="space-y-4">
+                <section className="rounded-lg border border-border p-4">
+                  <h3 className="font-display text-xl font-semibold">Destinatário e evento</h3>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+                    <ControlledField label="Nome do contato" value={detail.data.recipient_name ?? detail.client?.name ?? ""} onChange={(value) => updateData({ recipient_name: value })} />
+                    <ControlledField label="Telefone" value={detail.data.recipient_phone ?? detail.client?.phone ?? ""} onChange={(value) => updateData({ recipient_phone: value })} />
+                    <ControlledField label="E-mail" type="email" value={detail.data.recipient_email ?? detail.client?.email ?? ""} onChange={(value) => updateData({ recipient_email: value })} />
+                    <ControlledField label="Data do evento" type="date" value={(detail.data.event_date_snapshot ?? detail.event?.event_date ?? "").slice(0, 10)} onChange={(value) => updateData({ event_date_snapshot: value || null })} />
+                    <ControlledField label="Nome / tipo do evento" value={detail.data.event_title_snapshot ?? detail.event?.title ?? ""} onChange={(value) => updateData({ event_title_snapshot: value })} />
+                    <ControlledField label="Local da cerimônia" value={detail.data.ceremony_venue_snapshot ?? detail.event?.ceremony_venue ?? ""} onChange={(value) => updateData({ ceremony_venue_snapshot: value })} />
+                    <div className="sm:col-span-2 xl:col-span-1 2xl:col-span-2"><ControlledField label="Local da recepção" value={detail.data.reception_venue_snapshot ?? detail.event?.reception_venue ?? ""} onChange={(value) => updateData({ reception_venue_snapshot: value })} /></div>
+                  </div>
+                  <p className="mt-3 text-[10px] text-muted-foreground">Estes dados ficam congelados na proposta e podem existir mesmo sem cliente ou evento previamente cadastrados.</p>
+                </section>
+
                 <section className="rounded-lg border border-border p-4">
                   <h3 className="font-display text-xl font-semibold">Dados comerciais</h3>
                   <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
@@ -1926,6 +2607,7 @@ function Dashboard() {
   const [notice, setNotice] = useState("");
   const [modal, setModal] = useState<ModalState>(null);
   const [reservationEvent, setReservationEvent] = useState<EventRecord | null>(null);
+  const [eventDetailId, setEventDetailId] = useState<string | null>(null);
   const [proposalEditorId, setProposalEditorId] = useState<string | null>(null);
   const [preview, setPreview] = useState<{ html: string; title: string } | null>(null);
   const [backend, setBackend] = useState<BackendState>(EMPTY_BACKEND);
@@ -2070,7 +2752,7 @@ function Dashboard() {
               onPdf={openPdf}
             />
           )}
-          {active === "Eventos" && <EventsPage query={query} events={backend.events} openModal={openModal} announce={announce} onReserve={setReservationEvent} />}
+          {active === "Eventos" && <EventsPage query={query} events={backend.events} openModal={openModal} announce={announce} onReserve={setReservationEvent} onDetail={setEventDetailId} />}
           {active === "Estoque" && (
             <InventoryPage
               query={query}
@@ -2088,7 +2770,6 @@ function Dashboard() {
             <SettingsPage
               settings={backend.settings}
               packages={backend.packages}
-              services={backend.services}
               announce={announce}
               onRefresh={refresh}
             />
@@ -2096,13 +2777,36 @@ function Dashboard() {
         </main>
       </div>
 
-      {modal && (
+      {modal?.kind === "proposal" && (
+        <ProposalCreateModal
+          clients={backend.clients}
+          events={backend.events}
+          packages={backend.packages}
+          inventory={backend.inventory}
+          services={backend.services}
+          settings={backend.settings}
+          onClose={() => setModal(null)}
+          onSaved={refresh}
+          onCreated={setProposalEditorId}
+          announce={announce}
+        />
+      )}
+      {modal && modal.kind !== "proposal" && (
         <EntityModal
           state={modal}
           clients={backend.clients}
           events={backend.events}
           packages={backend.packages}
           onClose={() => setModal(null)}
+          onSaved={refresh}
+          announce={announce}
+        />
+      )}
+      {eventDetailId && (
+        <EventDetailModal
+          eventId={eventDetailId}
+          clients={backend.clients}
+          onClose={() => setEventDetailId(null)}
           onSaved={refresh}
           announce={announce}
         />
