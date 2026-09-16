@@ -1,32 +1,23 @@
-# Atelier Priscila Gefune — Dashboard de Eventos
+# Atelier Priscila Gefune — Frontend Mock V5
 
-Frontend mockado para validação da experiência de gestão de eventos, estoque, propostas e clientes.
+Frontend de validação visual para gestão de eventos, estoque, propostas e clientes.
 
-## Stack
+## Tecnologias
 - React 19
-- TanStack Start / Router
+- TanStack Start
 - Tailwind CSS 4
 - Lucide React
-- TypeScript
 
-## Identidade visual
-A interface usa uma direção premium inspirada na marca Atelier Priscila Gefune: preto/grafite, champagne, ivory, sálvia e rosé discreto. A logo original da cliente está em `src/assets/atelier-priscila-gefune-logo.jpeg`.
+## Versão
+A V5 implementa a identidade escura/champagne homologada para as telas Início, Eventos e Estoque, mantendo dados mockados e sem backend.
 
-## Dados de demonstração
-Os dados mockados ficam em `src/data/mockData.ts`.
+## Executar
 
-## Desenvolvimento
-
-```sh
+```bash
 npm install
 npm run dev
 ```
 
-Para gerar build:
+Domínio autorizado no Vite:
 
-```sh
-npm run build
-```
-
-## Situação atual
-Esta versão é apenas para homologação visual e de fluxo. Ainda não há integração com n8n, PostgreSQL, autenticação real ou geração real de PDF.
+`priscila-gefune.facilities-ai.com.br`
