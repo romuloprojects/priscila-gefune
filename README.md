@@ -1,68 +1,32 @@
-# Event Palette
+# Atelier Priscila Gefune — Dashboard de Eventos
 
-Use a imagem anexada como referência visual principal para a criação da interface.
+Frontend mockado para validação da experiência de gestão de eventos, estoque, propostas e clientes.
 
-Quero que a aplicação siga muito de perto:
+## Stack
+- React 19
+- TanStack Start / Router
+- Tailwind CSS 4
+- Lucide React
+- TypeScript
 
-a composição geral;
+## Identidade visual
+A interface usa uma direção premium inspirada na marca Atelier Priscila Gefune: preto/grafite, champagne, ivory, sálvia e rosé discreto. A logo original da cliente está em `src/assets/atelier-priscila-gefune-logo.jpeg`.
 
-o estilo dos cards;
+## Dados de demonstração
+Os dados mockados ficam em `src/data/mockData.ts`.
 
-a distribuição dos blocos;
-
-o uso de sidebar lateral;
-
-a hierarquia visual;
-
-o equilíbrio entre branco, creme, tons suaves e cores de destaque;
-
-a tipografia elegante;
-
-o visual voltado para eventos e decoração;
-
-a simplicidade para uma usuária não técnica.
-
-A imagem deve servir como referência de identidade visual e experiência, não apenas como inspiração genérica.
-
-Não quero uma dashboard corporativa tradicional.
-
-Quero uma interface com aparência de produto premium para cerimonial e decoração de eventos, mas fácil de usar.
-
-Pode melhorar os ícones, espaçamentos, responsividade e consistência visual, desde que preserve a essência da referência anexada.
-
-Importante:
-
-não sobrecarregar as telas;
-
-manter poucos campos;
-
-evitar gráficos complexos;
-
-evitar filtros excessivos;
-
-priorizar ações claras e grandes;
-
-manter o foco em Eventos, Estoque, Propostas e Clientes;
-
-manter o visual elegante, leve e acolhedor.
-
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/dafb269f-90cf-492f-b084-b2a835c296cb).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+## Desenvolvimento
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+npm install
 npm run dev
 ```
+
+Para gerar build:
+
+```sh
+npm run build
+```
+
+## Situação atual
+Esta versão é apenas para homologação visual e de fluxo. Ainda não há integração com n8n, PostgreSQL, autenticação real ou geração real de PDF.
