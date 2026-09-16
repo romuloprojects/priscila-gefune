@@ -1,54 +1,30 @@
-# Atelier Priscila Gefune — Mock de Validação V5
+# Lumè Eventos — versão mock para validação
 
-Esta versão parte da V4, mas reconstrói a camada visual principal conforme as telas homologadas em 15/09/2026.
+Esta versão é exclusivamente visual/funcional para homologação do fluxo antes da integração com n8n e PostgreSQL.
 
-## Telas homologadas implementadas
+## O que está navegável
+- Início
+- Eventos
+- Estoque
+- Propostas
+- Clientes
+- Configurações
 
-### Início
-- Sidebar escura fixa com logo oficial contida.
-- Header escuro com busca, notificações e perfil PG.
-- Hero escuro com composição floral e mensagem de boas-vindas.
-- 4 KPIs em cards ivory.
-- Próximos eventos em card claro.
-- Estoque rápido em lista simples.
-- Ações rápidas verticais.
-- Propostas recentes.
-- Alertas importantes.
-- Rodapé institucional.
-
-### Eventos
-- Identidade visual igual à Home.
-- 3 KPIs de resumo e botão Novo evento.
-- Busca e filtros de status/mês.
-- Lista de eventos com data, cliente, local, status e ação.
-- Agenda mensal visual.
-- Card institucional lateral.
-
-### Estoque
-- Identidade visual igual à Home.
-- Busca e filtros de categoria/status.
-- 4 KPIs de estoque.
-- Lista de itens em formato de tabela leve.
-- Itens com atenção.
-- Últimas movimentações.
-- Botão Adicionar item.
-
-## Demais telas
-Propostas, Clientes e Configurações continuam mockadas e foram alinhadas à nova linguagem visual para não quebrar a experiência. A próxima homologação pode detalhar essas páginas antes da integração com backend.
+## Interações simuladas
+- Novo evento
+- Adicionar item ao estoque
+- Nova proposta / gerar PDF (prévia simulada)
+- Novo cliente
+- Busca contextual por tela
+- Filtros simples de eventos, estoque e propostas
+- Alertas e botões de detalhe com feedback visual
 
 ## Dados
-Todos os dados continuam mockados em `src/data/mockData.ts`.
+Os mocks ficam centralizados em `src/data/mockData.ts` para facilitar a futura troca por APIs.
 
-## Configuração de deploy
-`vite.config.ts` preserva explicitamente:
-
-```ts
-allowedHosts: ["priscila-gefune.facilities-ai.com.br"]
-```
-
-## Backend
-Não há integração com n8n/PostgreSQL nesta versão.
-
-## Validação técnica
-- Todos os 58 arquivos TS/TSX passaram por transpile sintático sem erros.
-- O `npm install` não concluiu dentro do limite do ambiente de execução, portanto o build completo ainda deve ser validado no ambiente de publicação/Lovable antes de considerar esta versão final.
+## Próxima etapa após aprovação visual
+1. Fechar campos definitivos de Evento, Estoque, Cliente e Proposta.
+2. Modelar PostgreSQL.
+3. Criar APIs no n8n.
+4. Substituir mocks pelas APIs.
+5. Implementar reserva de estoque por intervalo de datas e geração real de PDF.
