@@ -275,6 +275,10 @@ export type ProposalDetail = {
     document_template: string;
     guest_count: number | null;
     package_price_snapshot: number | string;
+    pricing_mode: "automatic" | "manual";
+    manual_total: number | string | null;
+    show_item_prices: boolean;
+    show_service_prices: boolean;
     discount_type: string;
     discount_value: number | string;
     subtotal: number | string;
@@ -459,6 +463,10 @@ export const atelierApi = {
       requestJson<ProposalDetail>("/proposal-update", {
         method: "PATCH",
         body: JSON.stringify({ ...body, id }),
+      }),
+    delete: (id: string) =>
+      requestJson<{ ok: true; deleted_id: string }>(`/proposal-delete${qs({ id })}`, {
+        method: "DELETE",
       }),
     reserve: (id: string) =>
       requestJson<{ ok: true; event_id: string; items: unknown[] }>("/proposal-reserve", {

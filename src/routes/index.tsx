@@ -80,7 +80,7 @@ export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
-type Page = "Início" | "Eventos" | "Estoque" | "Propostas" | "Clientes" | "Configurações";
+type Page = "Início" | "Eventos" | "Estoque" | "Propostas" | "Clientes";
 type ModalKind = "event" | "inventory" | "proposal" | "client";
 type ModalState = { kind: ModalKind; inventoryItem?: InventoryItem } | null;
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -137,7 +137,6 @@ const navigation: { label: Page; icon: LucideIcon }[] = [
   { label: "Estoque", icon: Archive },
   { label: "Propostas", icon: FileText },
   { label: "Clientes", icon: Users },
-  { label: "Configurações", icon: Settings },
 ];
 
 function Brand() {
@@ -344,16 +343,8 @@ function eventStatusLabel(status: string) {
   return labels[status] ?? status;
 }
 
-function proposalStatusLabel(status: string) {
-  const labels: Record<string, string> = {
-    draft: "Rascunho",
-    sent: "Pendente",
-    approved: "Aprovada",
-    rejected: "Recusada",
-    expired: "Expirada",
-    cancelled: "Cancelada",
-  };
-  return labels[status] ?? status;
+function proposalStatusLabel(_status: string) {
+  return "Emitida";
 }
 
 function inventoryIconKind(category: string | null | undefined) {
@@ -435,7 +426,7 @@ function HomePage({
       icon: AlertTriangle,
       tone: "rose",
     },
-    { label: "Propostas pendentes", value: String(kpis?.pending_proposals ?? 0), icon: FileText, tone: "sage" },
+    { label: "Propostas emitidas", value: String(kpis?.pending_proposals ?? 0), icon: FileText, tone: "sage" },
   ];
 
   return (
@@ -785,7 +776,7 @@ function InventoryPage({
       <PageHeader
         eyebrow="Acervo"
         title="Estoque"
-        description="Quantidades e valores abaixo vêm diretamente do PostgreSQL. A disponibilidade considera as reservas de hoje."
+        description="Acompanhe quantidades, valores e disponibilidade dos itens do acervo."
         action="Adicionar item"
         onAction={() => openModal("inventory")}
       />
@@ -858,6 +849,7 @@ function ProposalsPage({
   onPreview,
   onPdf,
   onEdit,
+  onDelete,
 }: {
   query: string;
   proposals: Proposal[];
@@ -865,38 +857,25 @@ function ProposalsPage({
   onPreview: (id: string) => void;
   onPdf: (id: string) => void;
   onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
 }) {
-  const [status, setStatus] = useState("Todas");
-  const statuses = ["Todas", "Rascunho", "Pendente", "Aprovada", "Recusada", "Expirada", "Cancelada"];
   const list = useMemo(() => {
     const q = query.trim().toLocaleLowerCase("pt-BR");
     return proposals.filter((proposal) => {
-      const label = proposalStatusLabel(proposal.status);
       const text = `${proposal.client_name ?? ""} ${proposal.event_title ?? ""} ${proposal.title} ${proposal.proposal_number}`.toLocaleLowerCase("pt-BR");
-      return (!q || text.includes(q)) && (status === "Todas" || label === status);
+      return !q || text.includes(q);
     });
-  }, [proposals, query, status]);
+  }, [proposals, query]);
 
   return (
     <>
       <PageHeader
         eyebrow="Comercial"
         title="Propostas"
-        description="Propostas reais do PostgreSQL, com valores preservados por snapshot e PDF gerado pelo Gotenberg."
+        description="Crie, edite, visualize e gere propostas comerciais em PDF."
         action="Nova proposta"
         onAction={() => openModal("proposal")}
       />
-      <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
-        {statuses.map((name) => (
-          <Button
-            key={name}
-            className={`h-9 shrink-0 px-4 text-xs ${status === name ? "bg-sand text-brand" : "border border-border bg-card"}`}
-            onClick={() => setStatus(name)}
-          >
-            {name}
-          </Button>
-        ))}
-      </div>
       <div className="overflow-hidden rounded-lg border border-border bg-card shadow-soft">
         {list.map((proposal) => (
           <div
@@ -918,6 +897,9 @@ function ProposalsPage({
               </Button>
               <Button variant="outline" className="h-9 px-3 text-xs" onClick={() => onPdf(proposal.id)}>
                 PDF
+              </Button>
+              <Button variant="outline" className="h-9 px-3 text-xs text-danger" onClick={() => onDelete(proposal.id)} title="Excluir proposta">
+                <Trash2 className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -984,7 +966,7 @@ function ClientsPage({
                 <p className="flex min-w-0 items-center gap-2"><Mail className="h-4 w-4 shrink-0 text-brand" /><span className="truncate">{client.email || "E-mail não informado"}</span></p>
                 <p className="flex items-center justify-between pt-1 text-muted-foreground"><span>Próximo/último evento</span><strong className="text-foreground">{formatDate(clientEvents[0]?.event_date)}</strong></p>
               </div>
-              <Button variant="outline" className="mt-4 h-9 w-full text-xs" onClick={() => announce(`Cliente ${client.name} carregado do PostgreSQL`)}>
+              <Button variant="outline" className="mt-4 h-9 w-full text-xs" onClick={() => announce(`Cliente ${client.name} selecionado`)}>
                 Ver histórico
               </Button>
             </article>
@@ -1098,7 +1080,7 @@ function SettingsPage({
         ...form,
         proposal_valid_days: Number(form.proposal_valid_days || 7),
       });
-      announce("Configurações salvas no PostgreSQL");
+      announce("Configurações salvas");
       await onRefresh();
     } catch (error) {
       announce(apiErrorMessage(error));
@@ -1151,7 +1133,7 @@ function SettingsPage({
             <div className="mt-8 rounded-lg border border-border bg-card p-4 shadow-soft">
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-brand">Proposta comercial</p>
               <h3 className="mt-2 font-display text-2xl">{packages[0]?.name || "Pacote de evento"}</h3>
-              <p className="mt-1 text-xs text-muted-foreground">A prévia e o PDF usam o mesmo conteúdo vindo do PostgreSQL.</p>
+              <p className="mt-1 text-xs text-muted-foreground">A prévia e o PDF usam o mesmo conteúdo da proposta.</p>
               <div className="mt-5 h-px bg-border" />
               <div className="mt-4 flex items-end justify-between gap-4">
                 <span className="text-xs text-muted-foreground">Investimento</span>
@@ -1336,7 +1318,15 @@ function ProposalCreateModal({
   const [guestCount, setGuestCount] = useState(0);
   const [packageId, setPackageId] = useState("");
   const [packagePrice, setPackagePrice] = useState(0);
+  const [pricingMode, setPricingMode] = useState<"automatic" | "manual">("manual");
+  const [manualTotal, setManualTotal] = useState("");
+  const [showItemPrices, setShowItemPrices] = useState(false);
+  const [showServicePrices, setShowServicePrices] = useState(false);
   const [title, setTitle] = useState("");
+  const defaultPaymentTerms = (settings?.payment_terms ?? {}) as Record<string, any>;
+  const [paymentMethods, setPaymentMethods] = useState<string[]>(() => Array.isArray(defaultPaymentTerms.methods) ? defaultPaymentTerms.methods : ["Pix", "Transferência", "Cartão"]);
+  const [cardInstallments, setCardInstallments] = useState(String(defaultPaymentTerms.installments_card ?? 12));
+  const [paymentNotes, setPaymentNotes] = useState(String(defaultPaymentTerms.notes ?? "Sinal para reservar a data; saldo pode ser dividido nos meses que antecedem o evento."));
   const [packageDetail, setPackageDetail] = useState<PackageDetailResponse | null>(null);
   const [loadingPackage, setLoadingPackage] = useState(false);
   const [items, setItems] = useState<ProposalDraftItemRow[]>(() => inventory.map((item) => ({
@@ -1419,9 +1409,12 @@ function ProposalCreateModal({
 
     const selectedPackage = packages.find((item) => item.id === packageId);
     if (selectedPackage) {
-      setPackagePrice(Number(selectedPackage.default_price || 0));
+      const suggestedPrice = Number(selectedPackage.default_price || 0);
+      setPackagePrice(suggestedPrice);
+      if (!manualTotal && suggestedPrice > 0) setManualTotal(String(suggestedPrice));
       if (!guestCount && selectedPackage.default_guest_count) setGuestCount(selectedPackage.default_guest_count);
       if (!title) setTitle(selectedPackage.name);
+      if (selectedPackage.name.toLocaleLowerCase("pt-BR").includes("locação")) setShowItemPrices(true);
     }
 
     let cancelled = false;
@@ -1509,11 +1502,12 @@ function ProposalCreateModal({
     }
   };
 
-  const totalPreview = useMemo(() => {
+  const automaticTotalPreview = useMemo(() => {
     const itemTotal = items.filter((row) => row.selected && !row.included).reduce((sum, row) => sum + row.quantity * row.unitPrice, 0);
     const serviceTotal = serviceRows.filter((row) => row.selected && !row.included).reduce((sum, row) => sum + row.quantity * row.unitPrice, 0);
     return packagePrice + itemTotal + serviceTotal;
   }, [items, serviceRows, packagePrice]);
+  const totalPreview = pricingMode === "manual" ? Number(manualTotal || 0) : automaticTotalPreview;
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -1554,11 +1548,21 @@ function ProposalCreateModal({
         reception_venue: receptionVenue.trim(),
         package_id: packageId,
         package_price: packagePrice,
+        pricing_mode: pricingMode,
+        manual_total: pricingMode === "manual" ? manualTotal : "",
+        show_item_prices: showItemPrices,
+        show_service_prices: showServicePrices,
         title: title.trim() || selectedPackage?.name || "Proposta personalizada",
         guest_count: guestCount || "",
         valid_until: validUntil,
         document_template: selectedPackage?.name.toLocaleLowerCase("pt-BR").includes("locação") || (!packageId && hasRentalItems) ? "rental" : "package",
-        status: "draft",
+        status: "sent",
+        payment_terms: {
+          methods: paymentMethods,
+          installments_card: paymentMethods.includes("Cartão") && cardInstallments ? Number(cardInstallments) : null,
+          reservation_requires_deposit: true,
+          notes: paymentNotes.trim(),
+        },
         sections: Array.from(sectionMap.values()),
         items: items.filter((row) => row.selected).map((row, index) => ({
           inventory_item_id: row.inventoryItemId,
@@ -1649,13 +1653,42 @@ function ProposalCreateModal({
               <section className="rounded-lg border border-border p-4">
                 <h3 className="font-display text-xl font-semibold">Modelo e investimento</h3>
                 <label className="mt-3 block"><span className="text-xs font-semibold text-muted-foreground">Pacote / modelo (opcional)</span><select value={packageId} onChange={(e) => setPackageId(e.target.value)} className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"><option value="">Proposta personalizada</option>{packages.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-                  <ControlledField label="Título" value={title} onChange={setTitle} />
-                  <ControlledField label="Valor base do pacote" type="number" value={String(packagePrice)} onChange={(value) => setPackagePrice(Math.max(0, Number(value || 0)))} />
+                <div className="mt-3"><ControlledField label="Título" value={title} onChange={setTitle} /></div>
+                <div className="mt-4 rounded-lg bg-muted/35 p-1">
+                  <div className="grid grid-cols-2 gap-1">
+                    <button type="button" onClick={() => setPricingMode("manual")} className={`rounded-md px-3 py-2 text-xs font-medium ${pricingMode === "manual" ? "bg-card text-brand shadow-soft" : "text-muted-foreground"}`}>Valor final</button>
+                    <button type="button" onClick={() => setPricingMode("automatic")} className={`rounded-md px-3 py-2 text-xs font-medium ${pricingMode === "automatic" ? "bg-card text-brand shadow-soft" : "text-muted-foreground"}`}>Somar detalhes</button>
+                  </div>
+                </div>
+                {pricingMode === "manual" ? (
+                  <div className="mt-3">
+                    <ControlledField label="Valor final da proposta" type="number" value={manualTotal} onChange={setManualTotal} />
+                    <p className="mt-1 text-[10px] text-muted-foreground">Os valores individuais dos itens e serviços ficam opcionais e podem ser usados apenas como referência interna.</p>
+                  </div>
+                ) : (
+                  <div className="mt-3">
+                    <ControlledField label="Valor base do pacote" type="number" value={packagePrice ? String(packagePrice) : ""} onChange={(value) => setPackagePrice(Math.max(0, Number(value || 0)))} />
+                    <p className="mt-1 text-[10px] text-muted-foreground">O total é calculado por pacote + itens + serviços cobrados separadamente.</p>
+                  </div>
+                )}
+                <div className="mt-4 space-y-2 rounded-lg border border-border bg-card p-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-brand">O que o cliente vê</p>
+                  <label className="flex items-center justify-between gap-3 text-xs"><span>Mostrar preços dos itens / locações no PDF</span><input type="checkbox" checked={showItemPrices} onChange={(e) => setShowItemPrices(e.target.checked)} /></label>
+                  <label className="flex items-center justify-between gap-3 text-xs"><span>Mostrar preços dos serviços no PDF</span><input type="checkbox" checked={showServicePrices} onChange={(e) => setShowServicePrices(e.target.checked)} /></label>
+                </div>
+                <div className="mt-4 rounded-lg border border-border bg-card p-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-brand">Formas de pagamento</p>
+                  <div className="mt-2 flex flex-wrap gap-3 text-xs">
+                    {["Pix", "Transferência", "Cartão"].map((method) => (
+                      <label key={method} className="flex items-center gap-2"><input type="checkbox" checked={paymentMethods.includes(method)} onChange={(e) => setPaymentMethods((old) => e.target.checked ? Array.from(new Set([...old, method])) : old.filter((item) => item !== method))} />{method}</label>
+                    ))}
+                  </div>
+                  {paymentMethods.includes("Cartão") && <div className="mt-3"><ControlledField label="Parcelas no cartão" type="number" value={cardInstallments} onChange={setCardInstallments} /></div>}
+                  <label className="mt-3 block"><span className="text-xs font-semibold text-muted-foreground">Condição / observação de pagamento</span><textarea value={paymentNotes} onChange={(e) => setPaymentNotes(e.target.value)} className="mt-1 min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" /></label>
                 </div>
                 <div className="mt-4 rounded-lg bg-sand p-4">
-                  <div className="flex items-end justify-between"><span className="text-xs font-semibold uppercase tracking-wide text-brand">Total estimado</span><strong className="font-display text-3xl">{formatCurrency(totalPreview)}</strong></div>
-                  <p className="mt-1 text-[10px] text-muted-foreground">Pacote + itens e serviços cobrados à parte. O PostgreSQL recalcula o valor final ao salvar.</p>
+                  <div className="flex items-end justify-between"><span className="text-xs font-semibold uppercase tracking-wide text-brand">Investimento</span><strong className="font-display text-3xl">{formatCurrency(totalPreview)}</strong></div>
+                  <p className="mt-1 text-[10px] text-muted-foreground">{pricingMode === "manual" ? "Valor final definido por você para esta negociação." : "Valor calculado automaticamente pelos detalhes selecionados."}</p>
                 </div>
               </section>
             </aside>
@@ -1665,19 +1698,19 @@ function ProposalCreateModal({
                 <div className="flex items-start justify-between gap-3"><div><h3 className="font-display text-xl font-semibold">Itens / locações</h3><p className="text-xs text-muted-foreground">Marque o que entra nesta proposta e ajuste quantidade e valor somente para esta negociação.</p></div>{loadingPackage && <RefreshCw className="mt-1 h-4 w-4 animate-spin text-brand" />}</div>
                 <div className="mt-3 max-h-[300px] overflow-auto rounded-lg border border-border">
                   <table className="w-full min-w-[720px] text-left text-xs">
-                    <thead className="sticky top-0 bg-card text-muted-foreground"><tr><th className="p-2 font-medium">Usar</th><th className="p-2 font-medium">Item</th><th className="p-2 font-medium">Qtd.</th><th className="p-2 font-medium">Incluso</th><th className="p-2 font-medium">Valor unit.</th><th className="p-2 font-medium">Reservar</th></tr></thead>
-                    <tbody>{items.map((row, index) => <tr key={row.inventoryItemId} className="border-t border-border"><td className="p-2"><input type="checkbox" checked={row.selected} onChange={(e) => setItems((old) => old.map((item, i) => i === index ? { ...item, selected: e.target.checked } : item))} /></td><td className="p-2"><strong>{row.name}</strong>{row.packageDefined && <span className="ml-2 rounded-full bg-sage px-2 py-0.5 text-[9px] text-success">do pacote</span>}</td><td className="p-2"><input type="number" min="0" step="1" disabled={!row.selected} value={String(row.quantity)} onChange={(e) => setItems((old) => old.map((item, i) => i === index ? { ...item, quantity: Math.max(0, Number(e.target.value || 0)) } : item))} className="h-8 w-20 rounded border border-input bg-background px-2" /></td><td className="p-2"><input type="checkbox" disabled={!row.selected || !packageId} checked={row.included} onChange={(e) => setItems((old) => old.map((item, i) => i === index ? { ...item, included: e.target.checked } : item))} /></td><td className="p-2"><input type="number" min="0" step="0.01" disabled={!row.selected || row.included} value={String(row.unitPrice)} onChange={(e) => setItems((old) => old.map((item, i) => i === index ? { ...item, unitPrice: Math.max(0, Number(e.target.value || 0)) } : item))} className="h-8 w-28 rounded border border-input bg-background px-2" /></td><td className="p-2"><input type="checkbox" disabled={!row.selected} checked={row.reserveStock} onChange={(e) => setItems((old) => old.map((item, i) => i === index ? { ...item, reserveStock: e.target.checked } : item))} /></td></tr>)}</tbody>
+                    <thead className="sticky top-0 bg-card text-muted-foreground"><tr><th className="p-2 font-medium">Usar</th><th className="p-2 font-medium">Item</th><th className="p-2 font-medium">Qtd.</th><th className="p-2 font-medium">Incluso</th><th className="p-2 font-medium">Valor interno (opcional)</th><th className="p-2 font-medium">Reservar</th></tr></thead>
+                    <tbody>{items.map((row, index) => <tr key={row.inventoryItemId} className="border-t border-border"><td className="p-2"><input type="checkbox" checked={row.selected} onChange={(e) => setItems((old) => old.map((item, i) => i === index ? { ...item, selected: e.target.checked } : item))} /></td><td className="p-2"><strong>{row.name}</strong>{row.packageDefined && <span className="ml-2 rounded-full bg-sage px-2 py-0.5 text-[9px] text-success">do pacote</span>}</td><td className="p-2"><input type="number" min="0" step="1" disabled={!row.selected} value={String(row.quantity)} onChange={(e) => setItems((old) => old.map((item, i) => i === index ? { ...item, quantity: Math.max(0, Number(e.target.value || 0)) } : item))} className="h-8 w-20 rounded border border-input bg-background px-2" /></td><td className="p-2"><input type="checkbox" disabled={!row.selected || !packageId} checked={row.included} onChange={(e) => setItems((old) => old.map((item, i) => i === index ? { ...item, included: e.target.checked } : item))} /></td><td className="p-2"><input type="number" min="0" step="0.01" disabled={!row.selected || row.included} value={row.unitPrice ? String(row.unitPrice) : ""} placeholder="Opcional" onChange={(e) => setItems((old) => old.map((item, i) => i === index ? { ...item, unitPrice: Math.max(0, Number(e.target.value || 0)) } : item))} className="h-8 w-28 rounded border border-input bg-background px-2" /></td><td className="p-2"><input type="checkbox" disabled={!row.selected} checked={row.reserveStock} onChange={(e) => setItems((old) => old.map((item, i) => i === index ? { ...item, reserveStock: e.target.checked } : item))} /></td></tr>)}</tbody>
                   </table>
                 </div>
               </section>
 
               <section className="rounded-lg border border-border p-4">
                 <h3 className="font-display text-xl font-semibold">Serviços</h3>
-                <p className="text-xs text-muted-foreground">Serviços podem estar inclusos no pacote ou ser cobrados separadamente com um valor próprio para esta proposta.</p>
+                <p className="text-xs text-muted-foreground">O valor individual é opcional e serve para controle interno. Você pode deixar em branco e informar somente o valor final da proposta.</p>
                 <div className="mt-3 max-h-[300px] overflow-auto rounded-lg border border-border">
                   <table className="w-full min-w-[650px] text-left text-xs">
-                    <thead className="sticky top-0 bg-card text-muted-foreground"><tr><th className="p-2 font-medium">Usar</th><th className="p-2 font-medium">Serviço</th><th className="p-2 font-medium">Qtd.</th><th className="p-2 font-medium">Incluso</th><th className="p-2 font-medium">Valor</th></tr></thead>
-                    <tbody>{serviceRows.map((row, index) => <tr key={row.serviceId} className="border-t border-border"><td className="p-2"><input type="checkbox" checked={row.selected} onChange={(e) => setServiceRows((old) => old.map((service, i) => i === index ? { ...service, selected: e.target.checked } : service))} /></td><td className="p-2"><strong>{row.name}</strong>{row.packageDefined && <span className="ml-2 rounded-full bg-sage px-2 py-0.5 text-[9px] text-success">do pacote</span>}</td><td className="p-2"><input type="number" min="0" step="1" disabled={!row.selected} value={String(row.quantity)} onChange={(e) => setServiceRows((old) => old.map((service, i) => i === index ? { ...service, quantity: Math.max(0, Number(e.target.value || 0)) } : service))} className="h-8 w-20 rounded border border-input bg-background px-2" /></td><td className="p-2"><input type="checkbox" disabled={!row.selected || !packageId} checked={row.included} onChange={(e) => setServiceRows((old) => old.map((service, i) => i === index ? { ...service, included: e.target.checked } : service))} /></td><td className="p-2"><input type="number" min="0" step="0.01" disabled={!row.selected || row.included} value={String(row.unitPrice)} onChange={(e) => setServiceRows((old) => old.map((service, i) => i === index ? { ...service, unitPrice: Math.max(0, Number(e.target.value || 0)) } : service))} className="h-8 w-28 rounded border border-input bg-background px-2" /></td></tr>)}</tbody>
+                    <thead className="sticky top-0 bg-card text-muted-foreground"><tr><th className="p-2 font-medium">Usar</th><th className="p-2 font-medium">Serviço</th><th className="p-2 font-medium">Qtd.</th><th className="p-2 font-medium">Incluso</th><th className="p-2 font-medium">Valor interno (opcional)</th></tr></thead>
+                    <tbody>{serviceRows.map((row, index) => <tr key={row.serviceId} className="border-t border-border"><td className="p-2"><input type="checkbox" checked={row.selected} onChange={(e) => setServiceRows((old) => old.map((service, i) => i === index ? { ...service, selected: e.target.checked } : service))} /></td><td className="p-2"><strong>{row.name}</strong>{row.packageDefined && <span className="ml-2 rounded-full bg-sage px-2 py-0.5 text-[9px] text-success">do pacote</span>}</td><td className="p-2"><input type="number" min="0" step="1" disabled={!row.selected} value={String(row.quantity)} onChange={(e) => setServiceRows((old) => old.map((service, i) => i === index ? { ...service, quantity: Math.max(0, Number(e.target.value || 0)) } : service))} className="h-8 w-20 rounded border border-input bg-background px-2" /></td><td className="p-2"><input type="checkbox" disabled={!row.selected || !packageId} checked={row.included} onChange={(e) => setServiceRows((old) => old.map((service, i) => i === index ? { ...service, included: e.target.checked } : service))} /></td><td className="p-2"><input type="number" min="0" step="0.01" disabled={!row.selected || row.included} value={row.unitPrice ? String(row.unitPrice) : ""} placeholder="Opcional" onChange={(e) => setServiceRows((old) => old.map((service, i) => i === index ? { ...service, unitPrice: Math.max(0, Number(e.target.value || 0)) } : service))} className="h-8 w-28 rounded border border-input bg-background px-2" /></td></tr>)}</tbody>
                   </table>
                 </div>
               </section>
@@ -1802,7 +1835,7 @@ function EntityModal({
           title: value("title") || selectedPackage?.name || "Proposta",
           guest_count: value("guest_count") || selectedEvent?.guest_count || "",
           document_template: selectedPackage?.name.toLocaleLowerCase("pt-BR").includes("locação") ? "rental" : "package",
-          status: "draft",
+          status: "sent",
         });
       }
 
@@ -2075,7 +2108,7 @@ function EventDetailModal({
 
         <div className="min-h-0 flex-1 overflow-y-auto p-5">
           {loading ? (
-            <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground"><RefreshCw className="h-4 w-4 animate-spin" />Carregando detalhes do PostgreSQL...</div>
+            <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground"><RefreshCw className="h-4 w-4 animate-spin" />Carregando detalhes...</div>
           ) : detail ? (
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block sm:col-span-2">
@@ -2243,7 +2276,7 @@ function ReservationModal({
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-brand">Reserva de estoque</p>
             <h2 className="mt-1 font-display text-2xl font-semibold">{event.title}</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              {hasReservationPeriod ? `${formatDate(event.reserve_from)} a ${formatDate(event.reserve_until)} · disponibilidade calculada pelo PostgreSQL` : "Sem período de reserva do acervo"}
+              {hasReservationPeriod ? `${formatDate(event.reserve_from)} a ${formatDate(event.reserve_until)}` : "Sem período de reserva do acervo"}
             </p>
           </div>
           <Button variant="icon" className="h-9 w-9" onClick={onClose} aria-label="Fechar"><X className="h-5 w-5" /></Button>
@@ -2313,6 +2346,7 @@ function ProposalEditor({
   announce,
   onPreview,
   onPdf,
+  onDelete,
 }: {
   proposalId: string;
   onClose: () => void;
@@ -2320,6 +2354,7 @@ function ProposalEditor({
   announce: (message: string) => void;
   onPreview: (id: string) => void;
   onPdf: (id: string) => void;
+  onDelete: (id: string) => void;
 }) {
   const [detail, setDetail] = useState<ProposalDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -2355,9 +2390,13 @@ function ProposalEditor({
       const sectionKeys = new Map(detail.sections.map((section) => [section.id, section.section_key]));
       const result = await atelierApi.proposals.update(proposalId, {
         title: detail.data.title,
-        status: detail.data.status,
+        status: "sent",
         guest_count: detail.data.guest_count ?? "",
         package_price: Number(detail.data.package_price_snapshot ?? 0),
+        pricing_mode: detail.data.pricing_mode || "manual",
+        manual_total: detail.data.pricing_mode === "manual" ? detail.data.manual_total ?? detail.data.total ?? 0 : "",
+        show_item_prices: Boolean(detail.data.show_item_prices),
+        show_service_prices: Boolean(detail.data.show_service_prices),
         discount_type: detail.data.discount_type,
         discount_value: Number(detail.data.discount_value ?? 0),
         valid_until: detail.data.valid_until ?? "",
@@ -2495,19 +2534,45 @@ function ProposalEditor({
                   <h3 className="font-display text-xl font-semibold">Dados comerciais</h3>
                   <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
                     <ControlledField label="Título" value={detail.data.title} onChange={(value) => updateData({ title: value })} />
-                    <label className="block"><span className="text-xs font-semibold text-muted-foreground">Status</span><select value={detail.data.status} onChange={(e) => updateData({ status: e.target.value })} className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"><option value="draft">Rascunho</option><option value="sent">Enviada</option><option value="approved">Aprovada</option><option value="rejected">Recusada</option><option value="expired">Expirada</option><option value="cancelled">Cancelada</option></select></label>
+                    <label className="block"><span className="text-xs font-semibold text-muted-foreground">Status</span><div className="mt-1 flex h-10 items-center rounded-md border border-input bg-muted/35 px-3 text-sm">Emitida</div></label>
                     <ControlledField label="Convidados" type="number" value={String(detail.data.guest_count ?? "")} onChange={(value) => updateData({ guest_count: value ? Number(value) : null })} />
                     <ControlledField label="Validade" type="date" value={detail.data.valid_until?.slice(0, 10) || ""} onChange={(value) => updateData({ valid_until: value || null })} />
-                    <ControlledField label="Valor do pacote" type="number" value={String(detail.data.package_price_snapshot ?? 0)} onChange={(value) => updateData({ package_price_snapshot: Number(value || 0) })} />
-                    <label className="block"><span className="text-xs font-semibold text-muted-foreground">Tipo de desconto</span><select value={detail.data.discount_type} onChange={(e) => updateData({ discount_type: e.target.value })} className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"><option value="none">Sem desconto</option><option value="amount">Valor em R$</option><option value="percent">Percentual</option></select></label>
-                    <ControlledField label="Desconto" type="number" value={String(detail.data.discount_value ?? 0)} onChange={(value) => updateData({ discount_value: Number(value || 0) })} />
+                    <label className="block"><span className="text-xs font-semibold text-muted-foreground">Forma de definir o investimento</span><select value={detail.data.pricing_mode || "manual"} onChange={(e) => updateData({ pricing_mode: e.target.value as "automatic" | "manual" })} className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"><option value="manual">Valor final definido pela Priscila</option><option value="automatic">Somar pacote + itens + serviços</option></select></label>
+                    {detail.data.pricing_mode === "manual" ? (
+                      <ControlledField label="Valor final da proposta" type="number" value={detail.data.manual_total == null ? String(detail.data.total ?? "") : String(detail.data.manual_total)} onChange={(value) => updateData({ manual_total: value === "" ? null : Number(value) })} />
+                    ) : (
+                      <>
+                        <ControlledField label="Valor base do pacote" type="number" value={detail.data.package_price_snapshot ? String(detail.data.package_price_snapshot) : ""} onChange={(value) => updateData({ package_price_snapshot: Number(value || 0) })} />
+                        <label className="block"><span className="text-xs font-semibold text-muted-foreground">Tipo de desconto</span><select value={detail.data.discount_type} onChange={(e) => updateData({ discount_type: e.target.value })} className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"><option value="none">Sem desconto</option><option value="amount">Valor em R$</option><option value="percent">Percentual</option></select></label>
+                        <ControlledField label="Desconto" type="number" value={String(detail.data.discount_value ?? 0)} onChange={(value) => updateData({ discount_value: Number(value || 0) })} />
+                      </>
+                    )}
+                  </div>
+                  <div className="mt-4 space-y-2 rounded-lg border border-border bg-muted/25 p-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-brand">Visibilidade no PDF</p>
+                    <label className="flex items-center justify-between gap-3 text-xs"><span>Mostrar preços dos itens / locações</span><input type="checkbox" checked={Boolean(detail.data.show_item_prices)} onChange={(e) => updateData({ show_item_prices: e.target.checked })} /></label>
+                    <label className="flex items-center justify-between gap-3 text-xs"><span>Mostrar preços dos serviços</span><input type="checkbox" checked={Boolean(detail.data.show_service_prices)} onChange={(e) => updateData({ show_service_prices: e.target.checked })} /></label>
                   </div>
                   <div className="mt-4 rounded-lg bg-sand p-4">
-                    <div className="flex justify-between text-xs text-muted-foreground"><span>Subtotal atual</span><strong className="text-foreground">{formatCurrency(detail.data.subtotal)}</strong></div>
+                    <div className="flex justify-between text-xs text-muted-foreground"><span>Soma interna dos detalhes</span><strong className="text-foreground">{formatCurrency(detail.data.subtotal)}</strong></div>
                     <div className="mt-2 flex justify-between text-xs text-muted-foreground"><span>Desconto</span><strong className="text-danger">{formatCurrency(detail.data.discount_amount)}</strong></div>
                     <div className="mt-3 flex items-end justify-between border-t border-brand/15 pt-3"><span className="text-xs font-semibold uppercase tracking-wide text-brand">Total</span><strong className="font-display text-3xl">{formatCurrency(detail.data.total)}</strong></div>
-                    <p className="mt-2 text-[10px] text-muted-foreground">O total definitivo é recalculado no PostgreSQL ao salvar.</p>
+                    <p className="mt-2 text-[10px] text-muted-foreground">{detail.data.pricing_mode === "manual" ? "Os valores internos podem ficar em branco. O cliente recebe somente o investimento final, salvo se você habilitar a exibição dos preços acima." : "O total é recalculado automaticamente ao salvar."}</p>
                   </div>
+                </section>
+
+                <section className="rounded-lg border border-border p-4">
+                  <h3 className="font-display text-xl font-semibold">Formas de pagamento</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">As opções abaixo aparecem no PDF e podem ser ajustadas em cada proposta.</p>
+                  <div className="mt-3 flex flex-wrap gap-3 text-xs">
+                    {["Pix", "Transferência", "Cartão"].map((method) => {
+                      const pay = (detail.data.payment_terms ?? {}) as Record<string, any>;
+                      const methods = Array.isArray(pay.methods) ? pay.methods : ["Pix", "Transferência", "Cartão"];
+                      return <label key={method} className="flex items-center gap-2"><input type="checkbox" checked={methods.includes(method)} onChange={(e) => { const next = e.target.checked ? Array.from(new Set([...methods, method])) : methods.filter((item: string) => item !== method); updateData({ payment_terms: { ...pay, methods: next } }); }} />{method}</label>;
+                    })}
+                  </div>
+                  {(() => { const pay = (detail.data.payment_terms ?? {}) as Record<string, any>; const methods = Array.isArray(pay.methods) ? pay.methods : ["Pix", "Transferência", "Cartão"]; return methods.includes("Cartão") ? <div className="mt-3"><ControlledField label="Parcelas no cartão" type="number" value={String(pay.installments_card ?? 12)} onChange={(value) => updateData({ payment_terms: { ...pay, installments_card: value ? Number(value) : null } })} /></div> : null; })()}
+                  <label className="mt-3 block"><span className="text-xs font-semibold text-muted-foreground">Condição / observação de pagamento</span><textarea value={String(((detail.data.payment_terms ?? {}) as Record<string, any>).notes ?? "")} onChange={(e) => { const pay = (detail.data.payment_terms ?? {}) as Record<string, any>; updateData({ payment_terms: { ...pay, notes: e.target.value } }); }} className="mt-1 min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" /></label>
                 </section>
 
                 <section className="rounded-lg border border-border p-4">
@@ -2529,11 +2594,11 @@ function ProposalEditor({
                   <div className="flex items-end justify-between"><div><h3 className="font-display text-xl font-semibold">Itens / acervo</h3><p className="text-xs text-muted-foreground">Marque o que aparece no PDF e ajuste quantidade/valor desta proposta.</p></div></div>
                   <div className="mt-3 overflow-x-auto">
                     <table className="w-full min-w-[650px] text-left text-xs">
-                      <thead className="text-muted-foreground"><tr><th className="pb-2 font-medium">PDF</th><th className="pb-2 font-medium">Item</th><th className="pb-2 font-medium">Qtd.</th><th className="pb-2 font-medium">Valor</th><th className="pb-2 font-medium">Subtotal</th><th className="pb-2 font-medium">Reserva</th></tr></thead>
+                      <thead className="text-muted-foreground"><tr><th className="pb-2 font-medium">PDF</th><th className="pb-2 font-medium">Item</th><th className="pb-2 font-medium">Qtd.</th><th className="pb-2 font-medium">Valor interno</th><th className="pb-2 font-medium">Subtotal interno</th><th className="pb-2 font-medium">Reserva</th></tr></thead>
                       <tbody>
                         {detail.items.map((item, index) => {
                           const subtotal = item.billing_mode === "included" ? 0 : item.billing_mode === "fixed" ? Number(item.unit_price) : Number(item.quantity) * Number(item.unit_price);
-                          return <tr key={item.id} className="border-t border-border"><td className="py-2"><input type="checkbox" checked={item.show_in_pdf} onChange={(e) => setItem(index, { show_in_pdf: e.target.checked })} /></td><td className="py-2 pr-3"><strong>{item.name_snapshot}</strong>{item.billing_mode === "included" && <span className="ml-2 rounded-full bg-sage px-2 py-0.5 text-[9px] text-success">Incluso</span>}</td><td className="py-2 pr-2"><input type="number" min="0" step="1" value={String(item.quantity)} onChange={(e) => setItem(index, { quantity: Number(e.target.value || 0) })} className="h-8 w-20 rounded border border-input bg-background px-2" /></td><td className="py-2 pr-2"><input type="number" min="0" step="0.01" value={String(item.unit_price)} onChange={(e) => setItem(index, { unit_price: Number(e.target.value || 0) })} className="h-8 w-24 rounded border border-input bg-background px-2" disabled={item.billing_mode === "included"} /></td><td className="py-2 font-semibold">{formatCurrency(subtotal)}</td><td className="py-2"><input type="checkbox" checked={item.reserve_stock} onChange={(e) => setItem(index, { reserve_stock: e.target.checked })} /></td></tr>;
+                          return <tr key={item.id} className="border-t border-border"><td className="py-2"><input type="checkbox" checked={item.show_in_pdf} onChange={(e) => setItem(index, { show_in_pdf: e.target.checked })} /></td><td className="py-2 pr-3"><strong>{item.name_snapshot}</strong>{item.billing_mode === "included" && <span className="ml-2 rounded-full bg-sage px-2 py-0.5 text-[9px] text-success">Incluso</span>}</td><td className="py-2 pr-2"><input type="number" min="0" step="1" value={String(item.quantity)} onChange={(e) => setItem(index, { quantity: Number(e.target.value || 0) })} className="h-8 w-20 rounded border border-input bg-background px-2" /></td><td className="py-2 pr-2"><input type="number" min="0" step="0.01" value={Number(item.unit_price) ? String(item.unit_price) : ""} placeholder="Opcional" onChange={(e) => setItem(index, { unit_price: Number(e.target.value || 0) })} className="h-8 w-24 rounded border border-input bg-background px-2" disabled={item.billing_mode === "included"} /></td><td className="py-2 font-semibold">{formatCurrency(subtotal)}</td><td className="py-2"><input type="checkbox" checked={item.reserve_stock} onChange={(e) => setItem(index, { reserve_stock: e.target.checked })} /></td></tr>;
                         })}
                       </tbody>
                     </table>
@@ -2545,11 +2610,11 @@ function ProposalEditor({
                   <h3 className="font-display text-xl font-semibold">Serviços</h3>
                   <div className="mt-3 overflow-x-auto">
                     <table className="w-full min-w-[560px] text-left text-xs">
-                      <thead className="text-muted-foreground"><tr><th className="pb-2 font-medium">PDF</th><th className="pb-2 font-medium">Serviço</th><th className="pb-2 font-medium">Qtd.</th><th className="pb-2 font-medium">Valor</th><th className="pb-2 font-medium">Subtotal</th></tr></thead>
+                      <thead className="text-muted-foreground"><tr><th className="pb-2 font-medium">PDF</th><th className="pb-2 font-medium">Serviço</th><th className="pb-2 font-medium">Qtd.</th><th className="pb-2 font-medium">Valor interno</th><th className="pb-2 font-medium">Subtotal interno</th></tr></thead>
                       <tbody>
                         {detail.services.map((service, index) => {
                           const subtotal = service.billing_mode === "included" ? 0 : service.billing_mode === "fixed" ? Number(service.unit_price) : Number(service.quantity) * Number(service.unit_price);
-                          return <tr key={service.id} className="border-t border-border"><td className="py-2"><input type="checkbox" checked={service.show_in_pdf} onChange={(e) => setService(index, { show_in_pdf: e.target.checked })} /></td><td className="py-2 pr-3"><strong>{service.name_snapshot}</strong>{service.billing_mode === "included" && <span className="ml-2 rounded-full bg-sage px-2 py-0.5 text-[9px] text-success">Incluso</span>}</td><td className="py-2 pr-2"><input type="number" min="0" step="1" value={String(service.quantity)} onChange={(e) => setService(index, { quantity: Number(e.target.value || 0) })} className="h-8 w-20 rounded border border-input bg-background px-2" /></td><td className="py-2 pr-2"><input type="number" min="0" step="0.01" value={String(service.unit_price)} onChange={(e) => setService(index, { unit_price: Number(e.target.value || 0) })} className="h-8 w-24 rounded border border-input bg-background px-2" disabled={service.billing_mode === "included"} /></td><td className="py-2 font-semibold">{formatCurrency(subtotal)}</td></tr>;
+                          return <tr key={service.id} className="border-t border-border"><td className="py-2"><input type="checkbox" checked={service.show_in_pdf} onChange={(e) => setService(index, { show_in_pdf: e.target.checked })} /></td><td className="py-2 pr-3"><strong>{service.name_snapshot}</strong>{service.billing_mode === "included" && <span className="ml-2 rounded-full bg-sage px-2 py-0.5 text-[9px] text-success">Incluso</span>}</td><td className="py-2 pr-2"><input type="number" min="0" step="1" value={String(service.quantity)} onChange={(e) => setService(index, { quantity: Number(e.target.value || 0) })} className="h-8 w-20 rounded border border-input bg-background px-2" /></td><td className="py-2 pr-2"><input type="number" min="0" step="0.01" value={Number(service.unit_price) ? String(service.unit_price) : ""} placeholder="Opcional" onChange={(e) => setService(index, { unit_price: Number(e.target.value || 0) })} className="h-8 w-24 rounded border border-input bg-background px-2" disabled={service.billing_mode === "included"} /></td><td className="py-2 font-semibold">{formatCurrency(subtotal)}</td></tr>;
                         })}
                       </tbody>
                     </table>
@@ -2562,6 +2627,7 @@ function ProposalEditor({
         </div>
 
         <div className="flex flex-wrap justify-end gap-2 border-t border-border px-5 py-4">
+          <Button variant="outline" className="mr-auto h-10 px-4 text-danger" disabled={saving} onClick={() => onDelete(proposalId)}><Trash2 className="h-4 w-4" />Excluir proposta</Button>
           <Button variant="outline" className="h-10 px-4" onClick={onClose}>Fechar</Button>
           <Button variant="outline" className="h-10 px-4" disabled={!detail || saving} onClick={() => void reserveStock()}>Salvar + reservar estoque</Button>
           <Button variant="outline" className="h-10 px-4" disabled={!detail || saving} onClick={async () => { if (await saveProposal(false)) onPreview(proposalId); }}>Prévia</Button>
@@ -2589,7 +2655,7 @@ function apiErrorMessage(error: unknown) {
     return error.code ? `${error.message} (${error.code})` : error.message;
   }
   if (error instanceof Error) return error.message;
-  return "Erro inesperado ao acessar o backend.";
+  return "Erro inesperado ao carregar os dados.";
 }
 
 function todayIso() {
@@ -2641,8 +2707,8 @@ function Dashboard() {
       if (result.status === "rejected") nextIssues.push(`${label}: ${apiErrorMessage(result.reason)}`);
     };
     [
-      "Healthcheck",
-      "Dashboard",
+      "Conexão",
+      "Resumo",
       "Clientes",
       "Eventos",
       "Estoque",
@@ -2650,7 +2716,7 @@ function Dashboard() {
       "Propostas",
       "Pacotes",
       "Serviços",
-      "Configurações",
+      "Preferências",
     ].forEach((label, index) => fail(index, label));
 
     setBackend((previous) => ({
@@ -2694,6 +2760,18 @@ function Dashboard() {
     window.open(atelierApi.proposals.pdfUrl(id), "_blank", "noopener,noreferrer");
   };
 
+  const deleteProposal = async (id: string) => {
+    if (!window.confirm("Excluir esta proposta? Esta ação não pode ser desfeita.")) return;
+    try {
+      await atelierApi.proposals.delete(id);
+      if (proposalEditorId === id) setProposalEditorId(null);
+      await refresh();
+      announce("Proposta excluída");
+    } catch (error) {
+      announce(apiErrorMessage(error));
+    }
+  };
+
   const alertCount = backend.dashboard?.alerts?.length ?? 0;
 
   return (
@@ -2716,24 +2794,19 @@ function Dashboard() {
             <Button variant="icon" className="h-10 w-10" aria-label="Atualizar dados" onClick={() => void refresh()} disabled={loading}><RefreshCw className={`h-5 w-5 ${loading ? "animate-spin" : ""}`} /></Button>
             <Button variant="primary" className="h-10 px-3 sm:px-5" onClick={() => openModal("event")}><Plus className="h-4 w-4" /><span className="hidden sm:inline">Novo evento</span></Button>
             <Button variant="icon" className="relative h-10 w-10" aria-label="Notificações" onClick={() => announce(alertCount ? `Você tem ${alertCount} alerta(s)` : "Sem alertas pendentes")}><Bell className="h-5 w-5" />{alertCount > 0 && <span className="absolute right-2 top-1.5 h-2 w-2 rounded-full bg-danger" />}</Button>
-            <Button className="mobile-profile h-11 px-2" onClick={() => announce(backend.healthy ? "Backend n8n + PostgreSQL online" : "Verifique a conexão com o backend")}><span className="grid h-8 w-8 place-items-center rounded-full bg-avatar font-display text-sm font-semibold text-primary">PG</span><span>Olá, Priscila Gefune</span><ChevronDown className="h-4 w-4" /></Button>
+            <Button className="mobile-profile h-11 px-2" onClick={() => announce(backend.healthy ? "Sistema conectado" : "Verifique a conexão do sistema")}><span className="grid h-8 w-8 place-items-center rounded-full bg-avatar font-display text-sm font-semibold text-primary">PG</span><span>Olá, Priscila Gefune</span><ChevronDown className="h-4 w-4" /></Button>
           </div>
         </header>
 
         <main className="mx-auto max-w-[1600px] px-4 pb-9 pt-5 sm:px-6 lg:px-7">
           {issues.length > 0 && (
             <div className="mb-4 rounded-lg border border-danger/20 bg-blush px-4 py-3 text-xs text-danger">
-              <strong>Falha em uma ou mais APIs:</strong> {issues.join(" · ")}
+              <strong>Não foi possível carregar alguns dados:</strong> {issues.join(" · ")}
             </div>
           )}
           {loading && (
             <div className="mb-4 flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-xs text-muted-foreground shadow-soft">
-              <RefreshCw className="h-3.5 w-3.5 animate-spin" />Atualizando dados reais do n8n...
-            </div>
-          )}
-          {!loading && backend.healthy && (
-            <div className="mb-4 flex items-center gap-2 text-[11px] text-success">
-              <span className="h-2 w-2 rounded-full bg-success" />Dados reais · PostgreSQL + n8n + Gotenberg conectados
+              <RefreshCw className="h-3.5 w-3.5 animate-spin" />Atualizando dados...
             </div>
           )}
 
@@ -2763,17 +2836,9 @@ function Dashboard() {
             />
           )}
           {active === "Propostas" && (
-            <ProposalsPage query={query} proposals={backend.proposals} openModal={openModal} onPreview={previewProposal} onPdf={openPdf} onEdit={setProposalEditorId} />
+            <ProposalsPage query={query} proposals={backend.proposals} openModal={openModal} onPreview={previewProposal} onPdf={openPdf} onEdit={setProposalEditorId} onDelete={(id) => void deleteProposal(id)} />
           )}
           {active === "Clientes" && <ClientsPage query={query} clients={backend.clients} events={backend.events} openModal={openModal} announce={announce} />}
-          {active === "Configurações" && (
-            <SettingsPage
-              settings={backend.settings}
-              packages={backend.packages}
-              announce={announce}
-              onRefresh={refresh}
-            />
-          )}
         </main>
       </div>
 
@@ -2828,6 +2893,7 @@ function Dashboard() {
           announce={announce}
           onPreview={previewProposal}
           onPdf={openPdf}
+          onDelete={(id) => void deleteProposal(id)}
         />
       )}
       {preview && <ProposalPreview html={preview.html} title={preview.title} onClose={() => setPreview(null)} />}
