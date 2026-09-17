@@ -60,7 +60,7 @@ async function proxyAtelierApi(request: Request): Promise<Response | null> {
     const upstreamDisposition = upstream.headers.get("content-disposition");
     if (upstreamContentType) responseHeaders.set("content-type", upstreamContentType);
     if (upstreamDisposition) responseHeaders.set("content-disposition", upstreamDisposition);
-    if (!upstreamDisposition && suffix.endsWith("/pdf")) {
+    if (!upstreamDisposition && (suffix.endsWith("/pdf") || suffix.endsWith("/proposal-pdf"))) {
       responseHeaders.set("content-disposition", 'inline; filename="proposta-atelier-priscila-gefune.pdf"');
     }
     responseHeaders.set("cache-control", "no-store");

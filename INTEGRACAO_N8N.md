@@ -38,3 +38,22 @@ Preferência para containers na mesma rede:
 ## Regra de teste
 
 A interface não retorna para mock se a API falhar. Uma falha é exibida no topo da aplicação com o módulo que não respondeu.
+
+
+## Rotas estáticas V5
+
+Para compatibilidade com os webhooks de produção do n8n 2.36.8, detalhe/edição usam paths estáticos:
+
+- `GET /proposal-detail?id=...`
+- `PATCH /proposal-update` (`id` no body)
+- `POST /proposal-reserve` (`id` no body)
+- `GET /proposal-preview?id=...`
+- `GET /proposal-pdf?id=...`
+- `GET /event-detail?id=...`
+- `PATCH /event-update` (`id` no body)
+- `DELETE /event-delete?id=...`
+- `GET /event-items?event_id=...`
+- `PUT /event-items` (`event_id` no body)
+- `GET /package-detail?id=...`
+- `PATCH /package-update` (`id` no body)
+- `PATCH /client-update`, `/inventory-update`, `/service-update` (`id` no body)

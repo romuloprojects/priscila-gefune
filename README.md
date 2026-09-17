@@ -36,3 +36,8 @@ Integrações atuais:
 ## Observação sobre estoque inicial
 
 O seed do PostgreSQL cadastrou itens e valores observados nos orçamentos fornecidos, mas as quantidades físicas iniciam em zero. Ajuste cada item em **Estoque > Editar item** antes de testar conflitos de reserva.
+
+
+## Atualização V5 - compatibilidade com Webhooks de produção do n8n
+
+As chamadas de detalhe/edição não usam mais segmentos dinâmicos (`:id`) nos Webhooks do n8n. O frontend usa endpoints estáticos e envia IDs por query string ou body. Isso corrige os 404 `requested webhook is not registered` observados no editor de propostas e nos detalhes de eventos.

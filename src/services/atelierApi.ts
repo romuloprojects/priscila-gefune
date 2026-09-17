@@ -366,9 +366,9 @@ export const atelierApi = {
         body: JSON.stringify(body),
       }),
     update: (id: string, body: Record<string, unknown>) =>
-      requestJson<{ ok: true; data: Client }>(`/clients/${id}`, {
+      requestJson<{ ok: true; data: Client }>("/client-update", {
         method: "PATCH",
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...body, id }),
       }),
   },
 
@@ -382,21 +382,21 @@ export const atelierApi = {
         method: "POST",
         body: JSON.stringify(body),
       }),
-    detail: (id: string) => requestJson<EventDetailResponse>(`/events/${id}`),
+    detail: (id: string) => requestJson<EventDetailResponse>(`/event-detail${qs({ id })}`),
     update: (id: string, body: Record<string, unknown>) =>
-      requestJson<{ ok: true; data: EventRecord }>(`/events/${id}`, {
+      requestJson<{ ok: true; data: EventRecord }>("/event-update", {
         method: "PATCH",
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...body, id }),
       }),
     delete: (id: string) =>
-      requestJson<{ ok: true; deleted_id: string; title: string; detached_proposals: number }>(`/events/${id}`, {
+      requestJson<{ ok: true; deleted_id: string; title: string; detached_proposals: number }>(`/event-delete${qs({ id })}`, {
         method: "DELETE",
       }),
-    items: (id: string) => requestJson<EventItemsResponse>(`/events/${id}/items`),
+    items: (id: string) => requestJson<EventItemsResponse>(`/event-items${qs({ event_id: id })}`),
     saveItems: (id: string, items: Array<{ inventory_item_id: string; quantity: number }>) =>
-      requestJson<{ ok: true; event_id: string; items: unknown[] }>(`/events/${id}/items`, {
+      requestJson<{ ok: true; event_id: string; items: unknown[] }>("/event-items", {
         method: "PUT",
-        body: JSON.stringify({ items }),
+        body: JSON.stringify({ event_id: id, items }),
       }),
   },
 
@@ -419,28 +419,28 @@ export const atelierApi = {
         body: JSON.stringify(body),
       }),
     update: (id: string, body: Record<string, unknown>) =>
-      requestJson<{ ok: true; data: InventoryItem }>(`/inventory/${id}`, {
+      requestJson<{ ok: true; data: InventoryItem }>("/inventory-update", {
         method: "PATCH",
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...body, id }),
       }),
   },
 
   services: {
     list: () => requestJson<{ ok: true; data: ServiceItem[] }>("/services"),
     update: (id: string, body: Record<string, unknown>) =>
-      requestJson<{ ok: true; data: ServiceItem }>(`/services/${id}`, {
+      requestJson<{ ok: true; data: ServiceItem }>("/service-update", {
         method: "PATCH",
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...body, id }),
       }),
   },
 
   packages: {
     list: () => requestJson<{ ok: true; data: PackageItem[] }>("/packages"),
-    detail: (id: string) => requestJson<PackageDetailResponse>(`/packages/${id}`),
+    detail: (id: string) => requestJson<PackageDetailResponse>(`/package-detail${qs({ id })}`),
     update: (id: string, body: Record<string, unknown>) =>
-      requestJson<{ ok: true; data: PackageItem }>(`/packages/${id}`, {
+      requestJson<{ ok: true; data: PackageItem }>("/package-update", {
         method: "PATCH",
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...body, id }),
       }),
   },
 
@@ -449,27 +449,27 @@ export const atelierApi = {
       requestJson<{ ok: true; data: Proposal[] }>(
         `/proposals${qs({ status, search })}`,
       ),
-    detail: (id: string) => requestJson<ProposalDetail>(`/proposals/${id}`),
+    detail: (id: string) => requestJson<ProposalDetail>(`/proposal-detail${qs({ id })}`),
     create: (body: Record<string, unknown>) =>
       requestJson<ProposalDetail>("/proposals", {
         method: "POST",
         body: JSON.stringify(body),
       }),
     update: (id: string, body: Record<string, unknown>) =>
-      requestJson<ProposalDetail>(`/proposals/${id}`, {
+      requestJson<ProposalDetail>("/proposal-update", {
         method: "PATCH",
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...body, id }),
       }),
     reserve: (id: string) =>
-      requestJson<{ ok: true; event_id: string; items: unknown[] }>(`/proposals/${id}/reserve`, {
+      requestJson<{ ok: true; event_id: string; items: unknown[] }>("/proposal-reserve", {
         method: "POST",
-        body: JSON.stringify({}),
+        body: JSON.stringify({ id }),
       }),
     preview: (id: string) =>
       requestJson<{ ok: true; html: string; proposal_number: number; title: string }>(
-        `/proposals/${id}/preview`,
+        `/proposal-preview${qs({ id })}`,
       ),
-    pdfUrl: (id: string) => `${API_BASE}/proposals/${id}/pdf`,
+    pdfUrl: (id: string) => `${API_BASE}/proposal-pdf${qs({ id })}`,
   },
 
   settings: {
