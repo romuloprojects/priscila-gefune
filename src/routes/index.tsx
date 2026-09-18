@@ -18,6 +18,7 @@ import {
   NotebookPen,
   LogOut,
   Eye,
+  LockKeyhole,
   EyeOff,
   Download,
   Send,
@@ -50,7 +51,7 @@ import {
 
 import floralImage from "../assets/eventos-floral.jpg";
 import priscilaLogo from "../assets/atelier-priscila-gefune-logo-light.png";
-import loginVisual from "../assets/login-priscila-homologado.png";
+import loginVisual from "../assets/login-cover-homologado.png";
 import {
   AtelierApiError,
   atelierApi,
@@ -2705,25 +2706,49 @@ function LoginPage({ onLoggedIn }: { onLoggedIn: (user: AuthUser) => void }) {
     finally { setBusy(false); }
   };
 
-  return <div className="login-shell min-h-screen bg-[#f8f1e7]">
-    <div className="grid min-h-screen xl:grid-cols-[1.18fr_.82fr]">
-      <section className="login-cover relative hidden overflow-hidden xl:block">
-        <img src={loginVisual} alt="Atelier Priscila Gefune" className="absolute inset-0 h-full w-full object-cover object-left" />
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[#f7efe4]/15" />
+  return <div className="login-v83">
+    <div className="login-v83-layout">
+      <section className="login-v83-cover" aria-label="Atelier Priscila Gefune">
+        <img src={loginVisual} alt="Atelier Priscila Gefune" />
       </section>
-      <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-5 py-8 sm:px-8">
-        <div className="login-botanical login-botanical-top" aria-hidden="true" />
-        <div className="login-botanical login-botanical-bottom" aria-hidden="true" />
-        <form onSubmit={submit} className="relative z-10 w-full max-w-[520px] rounded-[28px] border border-[#dfc9aa] bg-[#fffaf3]/95 px-6 py-8 shadow-elevated sm:px-10 sm:py-10">
-          <div className="text-center"><p className="text-[10px] font-semibold uppercase tracking-[.34em] text-brand">Bem-vinda ao</p><p className="mt-1 text-xs uppercase tracking-[.3em] text-brand">Atelier Priscila Gefune</p><div className="mx-auto my-5 h-px w-28 bg-[#c9a56d]" /><h1 className="font-display text-5xl font-medium">Bem-vinda</h1><p className="mt-2 text-sm text-muted-foreground">Acesse sua área de gestão do Atelier.</p></div>
-          <div className="mt-8 space-y-5">
-            <label className="block"><span className="text-sm font-medium">Usuário</span><div className="relative mt-2"><User className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-brand"/><input autoComplete="username" type="text" value={username} onChange={e=>setUsername(e.target.value)} required className="h-14 w-full rounded-xl border border-input bg-white/70 pl-12 pr-4 text-base outline-none focus:ring-2 focus:ring-ring" placeholder="priscila.gefune" /></div></label>
-            <label className="block"><span className="text-sm font-medium">Senha</span><div className="relative mt-2"><input autoComplete="current-password" type={showPassword?"text":"password"} value={password} onChange={e=>setPassword(e.target.value)} required className="h-14 w-full rounded-xl border border-input bg-white/70 px-4 pr-12 text-base outline-none focus:ring-2 focus:ring-ring" placeholder="Digite sua senha"/><button type="button" onClick={()=>setShowPassword(v=>!v)} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground" aria-label={showPassword?"Ocultar senha":"Mostrar senha"}>{showPassword?<EyeOff className="h-5 w-5"/>:<Eye className="h-5 w-5"/>}</button></div></label>
+
+      <section className="login-v83-pane">
+        <div className="login-v83-frame" aria-hidden="true" />
+        <form onSubmit={submit} className="login-v83-form">
+          <div className="login-v83-head">
+            <p className="login-v83-eyebrow">Bem-vinda ao</p>
+            <p className="login-v83-brand">Atelier Priscila Gefune</p>
+            <div className="login-v83-divider"><span /><b>♡</b><span /></div>
+            <h1>Bem-vinda</h1>
+            <p className="login-v83-subtitle">Acesse sua área de gestão do Atelier.</p>
           </div>
-          <div className="mt-5 flex items-center justify-between gap-4 text-sm"><label className="flex items-center gap-2"><input type="checkbox" checked={remember} onChange={e=>setRemember(e.target.checked)} className="h-4 w-4 accent-[#9f753b]"/>Manter conectado</label><button type="button" onClick={()=>setError("Para redefinir a senha, use o workflow administrativo 08 ou fale com o responsável pelo sistema.")} className="text-brand underline underline-offset-4">Esqueci minha senha</button></div>
-          {error && <div className="mt-5 rounded-xl bg-blush px-4 py-3 text-sm text-danger">{error}</div>}
-          <button disabled={busy} className="mt-7 flex h-14 w-full items-center justify-center gap-3 rounded-xl bg-[#a77c40] text-lg font-semibold text-white shadow-button hover:bg-[#906a36] disabled:opacity-60">{busy?"Entrando...":"Entrar"}<ArrowRight className="h-5 w-5"/></button>
-          <div className="mt-7 flex items-center justify-center gap-3 text-xs text-muted-foreground"><span className="h-px w-12 bg-border"/><span>Acesso exclusivo</span><span className="h-px w-12 bg-border"/></div>
+
+          <div className="login-v83-fields">
+            <label>
+              <span>Usuário</span>
+              <div className="login-v83-input-wrap">
+                <User aria-hidden="true" />
+                <input autoComplete="username" type="text" value={username} onChange={e=>setUsername(e.target.value)} required placeholder="priscila.gefune" />
+              </div>
+            </label>
+            <label>
+              <span>Senha</span>
+              <div className="login-v83-input-wrap">
+                <LockKeyhole aria-hidden="true" />
+                <input autoComplete="current-password" type={showPassword?"text":"password"} value={password} onChange={e=>setPassword(e.target.value)} required placeholder="Digite sua senha" />
+                <button type="button" className="login-v83-eye" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?"Ocultar senha":"Mostrar senha"}>{showPassword?<EyeOff />:<Eye />}</button>
+              </div>
+            </label>
+          </div>
+
+          <div className="login-v83-options">
+            <label><input type="checkbox" checked={remember} onChange={e=>setRemember(e.target.checked)} /> <span>Manter conectado</span></label>
+            <button type="button" onClick={()=>setError("Para redefinir a senha, fale com o responsável pelo sistema.")}>Esqueci minha senha</button>
+          </div>
+
+          {error && <div className="login-v83-error">{error}</div>}
+          <button disabled={busy} className="login-v83-submit">{busy?"Entrando...":"Entrar"}<ArrowRight /></button>
+          <div className="login-v83-foot"><span/><LockKeyhole/><em>Acesso exclusivo ao Atelier Priscila Gefune</em><span/></div>
         </form>
       </section>
     </div>
@@ -2739,23 +2764,87 @@ function MeetingsPage({ query, meetings, clients, settings, refresh, announce }:
   const saveEmail=async()=>{ try{await atelierApi.settings.update({email:reportEmail}); await refresh(); announce("E-mail de relatórios salvo");}catch(e){announce(apiErrorMessage(e));} };
   const remove=async(id:string)=>{if(!confirm("Excluir esta reunião?"))return; try{await atelierApi.meetings.delete(id);await refresh();announce("Reunião excluída");}catch(e){announce(apiErrorMessage(e));}};
   const send=async(id:string)=>{try{const r=await atelierApi.meetings.sendEmail(id);await refresh();announce(r.email_sent?"Relatório enviado por e-mail":"Reunião salva, mas o e-mail não foi enviado");}catch(e){announce(apiErrorMessage(e));}};
+  const afterSave=async(m:Meeting)=>{
+    await refresh();
+    setCreating(false);
+    setEditing(null);
+    if (reportEmail.trim()) {
+      try {
+        const r=await atelierApi.meetings.sendEmail(m.id);
+        await refresh();
+        announce(r.email_sent?"Reunião salva e relatório enviado por e-mail":"Reunião salva. O envio do e-mail não foi concluído.");
+      } catch(e) {
+        announce(`Reunião salva. ${apiErrorMessage(e)}`);
+      }
+    } else {
+      announce("Reunião salva. Configure o e-mail de relatórios para receber uma cópia automaticamente.");
+    }
+  };
   return <>
-    <PageHeader eyebrow="REGISTROS" title="Reuniões" description="Registre cada conversa, mantenha o histórico e tenha uma cópia por e-mail e PDF." action="Nova reunião" onAction={()=>setCreating(true)} />
-    <div className="mb-4 grid gap-3 rounded-lg border border-border bg-card p-4 shadow-soft md:grid-cols-[1fr_auto] md:items-end"><label><span className="text-xs font-semibold text-muted-foreground">E-mail para receber os relatórios</span><input value={reportEmail} onChange={e=>setReportEmail(e.target.value)} type="email" className="mt-1 h-11 w-full rounded-md border border-input bg-background px-3 text-sm" placeholder="priscila@email.com"/></label><Button variant="outline" className="h-11 px-5" onClick={()=>void saveEmail()}>Salvar e-mail</Button></div>
+    <PageHeader eyebrow="REGISTROS" title="Reuniões" description="Use como um caderno digital: registre a conversa, mantenha o histórico e gere uma cópia por e-mail ou PDF." action="Nova reunião" onAction={()=>setCreating(true)} />
+
+    <div className="meeting-email-config">
+      <div>
+        <span className="meeting-config-label">E-mail para receber os relatórios</span>
+        <p>Ao salvar uma reunião, o sistema envia uma cópia automaticamente para este endereço. Você pode reenviar depois pelo histórico.</p>
+      </div>
+      <input value={reportEmail} onChange={e=>setReportEmail(e.target.value)} type="email" placeholder="priscila@email.com" />
+      <Button variant="outline" className="h-11 px-5" onClick={()=>void saveEmail()}>Salvar e-mail</Button>
+    </div>
+
     <div className="grid gap-3">
-      {rows.map(m=><article key={m.id} className="rounded-lg border border-border bg-card p-4 shadow-soft sm:p-5"><div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><NotebookPen className="h-5 w-5 text-brand"/><h2 className="font-display text-2xl font-semibold">{m.contact_name}</h2>{m.email_sent?<span className="rounded-full bg-sage px-2.5 py-1 text-[10px] font-semibold text-success">E-mail enviado</span>:<span className="rounded-full bg-sand px-2.5 py-1 text-[10px] font-semibold text-brand">Somente salvo</span>}</div><p className="mt-1 text-sm text-muted-foreground">{m.title||"Reunião"} · {new Intl.DateTimeFormat("pt-BR",{dateStyle:"medium",timeStyle:"short"}).format(new Date(m.meeting_at))}</p><p className="mt-3 line-clamp-3 whitespace-pre-wrap text-sm leading-relaxed">{m.content_preview||m.content}</p></div><div className="flex flex-wrap gap-2 md:justify-end"><Button variant="outline" className="h-9 px-3 text-xs" onClick={async()=>{const d=await atelierApi.meetings.detail(m.id);setEditing(d.data)}}>Abrir / editar</Button><Button variant="outline" className="h-9 px-3 text-xs" onClick={()=>void send(m.id)}><Send className="h-4 w-4"/>E-mail</Button><Button variant="outline" className="h-9 px-3 text-xs" onClick={()=>window.open(atelierApi.meetings.pdfUrl(m.id),"_blank")}><Download className="h-4 w-4"/>PDF</Button><Button variant="outline" className="h-9 px-3 text-xs text-danger" onClick={()=>void remove(m.id)}><Trash2 className="h-4 w-4"/>Excluir</Button></div></div></article>)}
+      {rows.map(m=><article key={m.id} className="rounded-lg border border-border bg-card p-4 shadow-soft sm:p-5"><div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><NotebookPen className="h-5 w-5 text-brand"/><h2 className="font-display text-2xl font-semibold">{m.contact_name}</h2>{m.email_sent?<span className="rounded-full bg-sage px-2.5 py-1 text-[10px] font-semibold text-success">E-mail enviado</span>:<span className="rounded-full bg-sand px-2.5 py-1 text-[10px] font-semibold text-brand">Somente salvo</span>}</div><p className="mt-1 text-sm text-muted-foreground">{m.title||"Reunião"} · {new Intl.DateTimeFormat("pt-BR",{dateStyle:"medium",timeStyle:"short"}).format(new Date(m.meeting_at))}</p><p className="mt-3 line-clamp-3 whitespace-pre-wrap text-sm leading-relaxed">{m.content_preview||m.content}</p></div><div className="flex flex-wrap gap-2 md:justify-end"><Button variant="outline" className="h-9 px-3 text-xs" onClick={async()=>{const d=await atelierApi.meetings.detail(m.id);setEditing(d.data)}}>Abrir / editar</Button><Button variant="outline" className="h-9 px-3 text-xs" onClick={()=>void send(m.id)}><Send className="h-4 w-4"/>Reenviar e-mail</Button><Button variant="outline" className="h-9 px-3 text-xs" onClick={()=>window.open(atelierApi.meetings.pdfUrl(m.id),"_blank")}><Download className="h-4 w-4"/>PDF</Button><Button variant="outline" className="h-9 px-3 text-xs text-danger" onClick={()=>void remove(m.id)}><Trash2 className="h-4 w-4"/>Excluir</Button></div></div></article>)}
       {!rows.length&&<div className="rounded-lg border border-border bg-card py-16 text-center text-sm text-muted-foreground">Nenhuma reunião registrada.</div>}
     </div>
-    {(creating||editing)&&<MeetingModal meeting={editing} clients={clients} defaultEmail={reportEmail} onClose={()=>{setCreating(false);setEditing(null)}} onSaved={async(m,sendEmail)=>{await refresh();setCreating(false);setEditing(null); if(sendEmail){try{await atelierApi.meetings.sendEmail(m.id);await refresh();announce("Reunião salva e envio processado");}catch(e){announce(`Reunião salva. ${apiErrorMessage(e)}`)}}else announce("Reunião salva");}}/>}
+    {(creating||editing)&&<MeetingModal meeting={editing} clients={clients} reportEmail={reportEmail} onClose={()=>{setCreating(false);setEditing(null)}} onSaved={afterSave}/>} 
   </>;
 }
 
-function MeetingModal({meeting,clients,defaultEmail,onClose,onSaved}:{meeting:Meeting|null;clients:Client[];defaultEmail:string;onClose:()=>void;onSaved:(m:Meeting,send:boolean)=>Promise<void>}){
+function MeetingModal({meeting,clients,reportEmail,onClose,onSaved}:{meeting:Meeting|null;clients:Client[];reportEmail:string;onClose:()=>void;onSaved:(m:Meeting)=>Promise<void>}){
   const local=(iso?:string)=>{const d=iso?new Date(iso):new Date();const pad=(n:number)=>String(n).padStart(2,"0");return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`};
-  const [clientId,setClientId]=useState(meeting?.client_id||""); const [name,setName]=useState(meeting?.contact_name||""); const [contactEmail,setContactEmail]=useState(meeting?.contact_email||""); const [when,setWhen]=useState(local(meeting?.meeting_at)); const [title,setTitle]=useState(meeting?.title||""); const [content,setContent]=useState(meeting?.content||""); const [emailTo,setEmailTo]=useState(meeting?.email_to||defaultEmail||""); const [sendEmail,setSendEmail]=useState(Boolean(emailTo)); const [busy,setBusy]=useState(false); const [error,setError]=useState("");
+  const [clientId,setClientId]=useState(meeting?.client_id||"");
+  const [name,setName]=useState(meeting?.contact_name||"");
+  const [contactEmail,setContactEmail]=useState(meeting?.contact_email||"");
+  const [when,setWhen]=useState(local(meeting?.meeting_at));
+  const [title,setTitle]=useState(meeting?.title||"");
+  const [content,setContent]=useState(meeting?.content||"");
+  const [busy,setBusy]=useState(false);
+  const [error,setError]=useState("");
   const chooseClient=(id:string)=>{setClientId(id);const c=clients.find(x=>x.id===id);if(c){setName(c.name);setContactEmail(c.email||"")}};
-  const submit=async(e:FormEvent)=>{e.preventDefault();setBusy(true);setError("");try{const body={client_id:clientId||null,contact_name:name,contact_email:contactEmail||null,meeting_at:new Date(when).toISOString(),title:title||null,content,email_to:emailTo||null};const r=meeting?await atelierApi.meetings.update(meeting.id,body):await atelierApi.meetings.create(body);await onSaved(r.data,sendEmail);}catch(err){setError(apiErrorMessage(err));setBusy(false)}};
-  return <div className="fixed inset-0 z-[70] flex items-end justify-center bg-overlay p-0 md:items-center md:p-5"><form onSubmit={submit} className="max-h-[96vh] w-full overflow-y-auto rounded-t-2xl bg-card shadow-elevated md:max-w-4xl md:rounded-2xl"><div className="flex items-start justify-between border-b border-border bg-peach px-5 py-4 sm:px-6"><div><p className="text-[10px] font-semibold uppercase tracking-[.2em] text-brand">REUNIÃO</p><h2 className="mt-1 font-display text-3xl font-semibold">{meeting?"Editar relatório":"Nova reunião"}</h2></div><Button type="button" variant="icon" className="h-10 w-10" onClick={onClose}><X className="h-5 w-5"/></Button></div><div className="grid gap-4 p-5 sm:p-6 md:grid-cols-2"><label className="md:col-span-2"><span className="text-xs font-semibold text-muted-foreground">Cliente cadastrado (opcional)</span><select value={clientId} onChange={e=>chooseClient(e.target.value)} className="mt-1 h-11 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="">Contato ainda não cadastrado</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label><ControlledField label="Cliente / contato" value={name} onChange={setName}/><ControlledField label="E-mail do contato (opcional)" type="email" value={contactEmail} onChange={setContactEmail}/><label><span className="text-xs font-semibold text-muted-foreground">Data e hora</span><input type="datetime-local" value={when} onChange={e=>setWhen(e.target.value)} required className="mt-1 h-11 w-full rounded-md border border-input bg-background px-3 text-sm"/></label><ControlledField label="Assunto" value={title} onChange={setTitle}/><div className="md:col-span-2"><label className="text-xs font-semibold text-muted-foreground">Anotações da reunião</label><textarea autoFocus={!meeting} value={content} onChange={e=>setContent(e.target.value)} required className="mt-1 min-h-[300px] w-full rounded-xl border border-input bg-background px-4 py-3 text-base leading-relaxed outline-none focus:ring-2 focus:ring-ring" placeholder="Escreva aqui tudo que foi conversado, decisões, preferências, próximos passos..."/></div><div className="md:col-span-2 rounded-xl bg-sand/60 p-4"><label className="text-xs font-semibold text-muted-foreground">Enviar uma cópia para</label><input type="email" value={emailTo} onChange={e=>setEmailTo(e.target.value)} className="mt-1 h-11 w-full rounded-md border border-input bg-background px-3 text-sm" placeholder="E-mail da Priscila"/><label className="mt-3 flex items-center gap-2 text-sm"><input type="checkbox" checked={sendEmail} onChange={e=>setSendEmail(e.target.checked)} disabled={!emailTo}/>Enviar relatório por e-mail depois de salvar</label><p className="mt-1 text-xs text-muted-foreground">Mesmo se o e-mail falhar, o conteúdo já terá sido salvo no sistema.</p></div>{error&&<div className="md:col-span-2 rounded-lg bg-blush px-4 py-3 text-sm text-danger">{error}</div>}</div><div className="sticky bottom-0 flex flex-wrap justify-end gap-2 border-t border-border bg-card/95 px-5 py-4 backdrop-blur"><Button type="button" variant="outline" className="h-11 px-5" onClick={onClose}>Cancelar</Button><Button type="submit" variant="primary" className="h-11 px-6" disabled={busy}>{busy?"Salvando...":"Salvar reunião"}</Button></div></form></div>;
+  const submit=async(e:FormEvent)=>{e.preventDefault();setBusy(true);setError("");try{const body={client_id:clientId||null,contact_name:name,contact_email:contactEmail||null,meeting_at:new Date(when).toISOString(),title:title||null,content,email_to:reportEmail.trim()||null};const r=meeting?await atelierApi.meetings.update(meeting.id,body):await atelierApi.meetings.create(body);await onSaved(r.data);}catch(err){setError(apiErrorMessage(err));setBusy(false)}};
+  return <div className="meeting-modal-overlay" role="dialog" aria-modal="true" aria-label={meeting?"Editar reunião":"Nova reunião"}>
+    <form onSubmit={submit} className="meeting-modal">
+      <header className="meeting-modal-header">
+        <div><p>REUNIÃO</p><h2>{meeting?"Editar relatório":"Nova reunião"}</h2></div>
+        <button type="button" className="meeting-modal-close" onClick={onClose} aria-label="Fechar"><X /></button>
+      </header>
+
+      <div className="meeting-modal-scroll">
+        <div className="meeting-fields">
+          <label className="meeting-span-2"><span>Cliente cadastrado (opcional)</span><select value={clientId} onChange={e=>chooseClient(e.target.value)}><option value="">Contato ainda não cadastrado</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
+          <ControlledField label="Cliente / contato" value={name} onChange={setName}/>
+          <ControlledField label="E-mail do contato (opcional)" type="email" value={contactEmail} onChange={setContactEmail}/>
+          <label><span>Data e hora</span><input type="datetime-local" value={when} onChange={e=>setWhen(e.target.value)} required /></label>
+          <ControlledField label="Assunto" value={title} onChange={setTitle}/>
+        </div>
+
+        <div className="meeting-notes-block">
+          <div className="meeting-notes-head"><div><span>Anotações da reunião</span><p>Use este espaço livremente durante a conversa. Decisões, preferências, medidas, valores, pendências e próximos passos.</p></div><small>{content.length.toLocaleString("pt-BR")} caracteres</small></div>
+          <textarea autoFocus={!meeting} value={content} onChange={e=>setContent(e.target.value)} required placeholder="Comece a escrever aqui..." />
+        </div>
+
+        <div className="meeting-send-note">
+          {reportEmail.trim()?<>Ao salvar, uma cópia será enviada automaticamente para <strong>{reportEmail}</strong>. O conteúdo permanece salvo mesmo se o envio falhar.</>:<>A reunião será salva normalmente. Para receber cópias automáticas por e-mail, configure o endereço na tela de Reuniões.</>}
+        </div>
+        {error&&<div className="meeting-error">{error}</div>}
+      </div>
+
+      <footer className="meeting-modal-footer">
+        <button type="button" className="meeting-cancel" onClick={onClose}>Cancelar</button>
+        <button type="submit" className="meeting-save" disabled={busy}>{busy?"Salvando...":"Salvar reunião"}</button>
+      </footer>
+    </form>
+  </div>;
 }
 
 function todayIso() {
