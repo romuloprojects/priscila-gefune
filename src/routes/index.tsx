@@ -399,6 +399,7 @@ function HomePage({
   onPreview,
   onPdf,
   meetings,
+  onNewMeeting,
 }: {
   query: string;
   navigate: (page: Page) => void;
@@ -408,6 +409,7 @@ function HomePage({
   onPreview: (id: string) => void;
   onPdf: (id: string) => void;
   meetings: Meeting[];
+  onNewMeeting: () => void;
 }) {
   const upcoming = dashboard?.upcoming_events ?? [];
   const shownEvents = useMemo(() => {
@@ -442,6 +444,7 @@ function HomePage({
       tone: "rose",
     },
     { label: "Propostas emitidas", value: String(kpis?.pending_proposals ?? 0), icon: FileText, tone: "sage" },
+    { label: "Reuniões realizadas", value: new Intl.NumberFormat("pt-BR").format(meetings.length), icon: NotebookPen, tone: "sand" },
   ];
 
   return (
@@ -471,7 +474,7 @@ function HomePage({
         </p>
       </section>
 
-      <section aria-label="Resumo" className="mt-4 grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <section aria-label="Resumo" className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-5">
         {metrics.map(({ label, value, icon: Icon, tone }) => (
           <article
             key={label}
@@ -672,8 +675,8 @@ function HomePage({
             <Button className="min-h-[58px] flex-col bg-peach px-3 text-xs" onClick={() => openModal("event")}>
               <CalendarDays className="h-5 w-5 text-brand" />Novo evento
             </Button>
-            <Button className="min-h-[58px] flex-col bg-peach px-3 text-xs" onClick={() => openModal("client")}>
-              <UserPlus className="h-5 w-5 text-brand" />Novo cliente
+            <Button className="min-h-[58px] flex-col bg-peach px-3 text-xs" onClick={onNewMeeting}>
+              <NotebookPen className="h-5 w-5 text-brand" />Nova reunião
             </Button>
             <Button className="min-h-[58px] flex-col bg-peach px-3 text-xs" onClick={() => openModal("inventory")}>
               <PackageCheck className="h-5 w-5 text-brand" />Adicionar item
@@ -2757,11 +2760,17 @@ function LoginPage({ onLoggedIn }: { onLoggedIn: (user: AuthUser) => void }) {
   );
 }
 
-function MeetingsPage({ query, meetings, settings, refresh, announce }: { query: string; meetings: Meeting[]; clients: Client[]; settings: CompanySettings | null; refresh: () => Promise<void>; announce: (m:string)=>void }) {
+function MeetingsPage({ query, meetings, settings, refresh, announce, openCreateToken }: { query: string; meetings: Meeting[]; clients: Client[]; settings: CompanySettings | null; refresh: () => Promise<void>; announce: (m:string)=>void; openCreateToken?: number }) {
   const [editing, setEditing] = useState<Meeting | null>(null);
   const [creating, setCreating] = useState(false);
   const [reportEmail, setReportEmail] = useState(settings?.email || "");
   useEffect(()=>setReportEmail(settings?.email || ""),[settings?.email]);
+  useEffect(() => {
+    if (openCreateToken && openCreateToken > 0) {
+      setEditing(null);
+      setCreating(true);
+    }
+  }, [openCreateToken]);
 
   const rows = meetings.filter((meeting) =>
     `${meeting.contact_name} ${meeting.title || ""} ${meeting.content_preview || meeting.content || ""}`
@@ -2996,6 +3005,7 @@ function Dashboard() {
   const [backend, setBackend] = useState<BackendState>(EMPTY_BACKEND);
   const [loading, setLoading] = useState(true);
   const [issues, setIssues] = useState<string[]>([]);
+  const [meetingCreateToken, setMeetingCreateToken] = useState(0);
 
   const announce = useCallback((message: string) => {
     setNotice(message);
@@ -3068,6 +3078,12 @@ function Dashboard() {
   };
 
   const openModal = (kind: ModalKind) => setModal({ kind });
+  const openNewMeeting = () => {
+    setActive("Reuniões");
+    setQuery("");
+    setMeetingCreateToken((value) => value + 1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const previewProposal = async (id: string) => {
     try {
@@ -3151,6 +3167,7 @@ function Dashboard() {
               onPreview={previewProposal}
               onPdf={openPdf}
               meetings={backend.meetings}
+              onNewMeeting={openNewMeeting}
             />
           )}
           {active === "Eventos" && <EventsPage query={query} events={backend.events} openModal={openModal} announce={announce} onReserve={setReservationEvent} onDetail={setEventDetailId} />}
@@ -3167,7 +3184,7 @@ function Dashboard() {
             <ProposalsPage query={query} proposals={backend.proposals} openModal={openModal} onPreview={previewProposal} onPdf={openPdf} onEdit={setProposalEditorId} onDelete={(id) => void deleteProposal(id)} />
           )}
           {active === "Clientes" && <ClientsPage query={query} clients={backend.clients} events={backend.events} openModal={openModal} announce={announce} />}
-          {active === "Reuniões" && <MeetingsPage query={query} meetings={backend.meetings} clients={backend.clients} settings={backend.settings} refresh={refresh} announce={announce} />}
+          {active === "Reuniões" && <MeetingsPage query={query} meetings={backend.meetings} clients={backend.clients} settings={backend.settings} refresh={refresh} announce={announce} openCreateToken={meetingCreateToken} />}
         </main>
       </div>
 
