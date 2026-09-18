@@ -25,61 +25,102 @@ function getN8nBaseUrl() {
   return (configured || DEFAULT_N8N_WEBHOOK_BASE).replace(/\/$/, "");
 }
 
-async function proxyAtelierApi(request: Request): Promise<Response | null> {
-  const incoming = new URL(request.url);
-  const prefix = "/api/atelier";
-  if (incoming.pathname !== prefix && !incoming.pathname.startsWith(`${prefix}/`)) {
-    return null;
+function parseCookies(value: string | null) {
+  const out: Record<string, string> = {};
+  for (const part of (value || "").split(";")) {
+    const [rawKey, ...rest] = part.trim().split("=");
+    if (!rawKey) continue;
+    out[rawKey] = decodeURIComponent(rest.join("="));
   }
+  return out;
+}
 
-  const suffix = incoming.pathname.slice(prefix.length) || "/";
-  const target = new URL(`${getN8nBaseUrl()}${suffix}`);
+const SESSION_COOKIE = "atelier_session";
+
+async function callN8n(path: string, request: Request, token?: string): Promise<Response> {
+  const incoming = new URL(request.url);
+  const target = new URL(`${getN8nBaseUrl()}${path}`);
   target.search = incoming.search;
-
   const headers = new Headers();
   const contentType = request.headers.get("content-type");
   const accept = request.headers.get("accept");
   if (contentType) headers.set("content-type", contentType);
   if (accept) headers.set("accept", accept);
-
+  if (token) headers.set("authorization", `Bearer ${token}`);
+  const ua = request.headers.get("user-agent");
+  if (ua) headers.set("user-agent", ua);
   const method = request.method.toUpperCase();
   const hasBody = method !== "GET" && method !== "HEAD";
   const body = hasBody ? await request.arrayBuffer() : undefined;
+  return fetch(target, { method, headers, body: hasBody ? body : undefined, redirect: "manual", cache: "no-store" });
+}
+
+async function validateSession(request: Request, token: string): Promise<boolean> {
+  const probe = new Request(new URL("/api/atelier/auth/session", request.url), { method: "GET", headers: { accept: "application/json" } });
+  try {
+    const response = await callN8n("/auth/session", probe, token);
+    if (!response.ok) return false;
+    const payload = await response.json() as { ok?: boolean; authenticated?: boolean };
+    return payload.ok === true && payload.authenticated === true;
+  } catch { return false; }
+}
+
+async function proxyAtelierApi(request: Request): Promise<Response | null> {
+  const incoming = new URL(request.url);
+  const prefix = "/api/atelier";
+  if (incoming.pathname !== prefix && !incoming.pathname.startsWith(`${prefix}/`)) return null;
+
+  const suffix = incoming.pathname.slice(prefix.length) || "/";
+  const cookies = parseCookies(request.headers.get("cookie"));
+  const token = cookies[SESSION_COOKIE] || "";
+  const publicAuth = suffix === "/auth/login";
+
+  if (!publicAuth && suffix !== "/auth/session" && !token) {
+    return Response.json({ ok: false, code: "AUTH_REQUIRED", message: "Faça login para continuar." }, { status: 401, headers: { "cache-control": "no-store" } });
+  }
+
+  if (!publicAuth && suffix !== "/auth/session" && !(await validateSession(request, token))) {
+    return Response.json({ ok: false, code: "SESSION_EXPIRED", message: "Sua sessão expirou. Entre novamente." }, { status: 401, headers: { "cache-control": "no-store", "set-cookie": `${SESSION_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0` } });
+  }
 
   try {
-    const upstream = await fetch(target, {
-      method,
-      headers,
-      body: hasBody ? body : undefined,
-      redirect: "manual",
-      cache: "no-store",
-    });
+    if (suffix === "/auth/login") {
+      const upstream = await callN8n(suffix, request);
+      const payload = await upstream.json() as any;
+      if (!upstream.ok || payload?.ok === false || !payload?.token) {
+        return Response.json(payload, { status: upstream.ok ? 401 : upstream.status, headers: { "cache-control": "no-store" } });
+      }
+      const maxAge = payload.remember ? 60 * 60 * 24 * 30 : 60 * 60 * 12;
+      const { token: _hidden, ...safe } = payload;
+      return Response.json({ ...safe, authenticated: true }, { headers: { "cache-control": "no-store", "set-cookie": `${SESSION_COOKIE}=${encodeURIComponent(payload.token)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}` } });
+    }
 
+    if (suffix === "/auth/session") {
+      if (!token) return Response.json({ ok: false, authenticated: false }, { status: 401, headers: { "cache-control": "no-store" } });
+      const upstream = await callN8n(suffix, request, token);
+      const body = await upstream.text();
+      return new Response(body, { status: upstream.ok ? 200 : upstream.status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
+    }
+
+    if (suffix === "/auth/logout") {
+      const upstream = await callN8n(suffix, request, token);
+      const body = await upstream.text();
+      return new Response(body || JSON.stringify({ ok: true }), { status: 200, headers: { "content-type": "application/json", "cache-control": "no-store", "set-cookie": `${SESSION_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0` } });
+    }
+
+    const upstream = await callN8n(suffix, request, token);
     const responseHeaders = new Headers();
     const upstreamContentType = upstream.headers.get("content-type");
     const upstreamDisposition = upstream.headers.get("content-disposition");
     if (upstreamContentType) responseHeaders.set("content-type", upstreamContentType);
     if (upstreamDisposition) responseHeaders.set("content-disposition", upstreamDisposition);
-    if (!upstreamDisposition && (suffix.endsWith("/pdf") || suffix.endsWith("/proposal-pdf"))) {
-      responseHeaders.set("content-disposition", 'inline; filename="proposta-atelier-priscila-gefune.pdf"');
-    }
+    if (!upstreamDisposition && suffix.endsWith("/proposal-pdf")) responseHeaders.set("content-disposition", 'inline; filename="proposta-atelier-priscila-gefune.pdf"');
+    if (!upstreamDisposition && suffix.endsWith("/meeting-pdf")) responseHeaders.set("content-disposition", 'attachment; filename="relatorio-reuniao-atelier-priscila-gefune.pdf"');
     responseHeaders.set("cache-control", "no-store");
-
-    return new Response(upstream.body, {
-      status: upstream.status,
-      statusText: upstream.statusText,
-      headers: responseHeaders,
-    });
+    return new Response(upstream.body, { status: upstream.status, statusText: upstream.statusText, headers: responseHeaders });
   } catch (error) {
-    console.error("Falha ao acessar n8n:", error);
-    return Response.json(
-      {
-        ok: false,
-        code: "N8N_UNREACHABLE",
-        message: "Não foi possível acessar o backend n8n.",
-      },
-      { status: 502, headers: { "cache-control": "no-store" } },
-    );
+    console.error("Falha ao acessar o serviço da aplicação:", error);
+    return Response.json({ ok: false, code: "SERVICE_UNAVAILABLE", message: "Não foi possível acessar o serviço da aplicação." }, { status: 502, headers: { "cache-control": "no-store" } });
   }
 }
 

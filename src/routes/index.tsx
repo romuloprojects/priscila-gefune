@@ -15,6 +15,12 @@ import {
   Home,
   Leaf,
   Mail,
+  NotebookPen,
+  LogOut,
+  Eye,
+  EyeOff,
+  Download,
+  Send,
   MapPin,
   Menu,
   Package,
@@ -23,9 +29,9 @@ import {
   Plus,
   RefreshCw,
   Search,
-  Settings,
   Sparkles,
   Trash2,
+  User,
   UserPlus,
   Users,
   X,
@@ -44,6 +50,7 @@ import {
 
 import floralImage from "../assets/eventos-floral.jpg";
 import priscilaLogo from "../assets/atelier-priscila-gefune-logo-light.png";
+import loginVisual from "../assets/login-priscila-homologado.png";
 import {
   AtelierApiError,
   atelierApi,
@@ -59,6 +66,8 @@ import {
   type Proposal,
   type ProposalDetail,
   type ServiceItem,
+  type Meeting,
+  type AuthUser,
 } from "../services/atelierApi";
 
 export const Route = createFileRoute("/")({
@@ -80,7 +89,7 @@ export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
-type Page = "Início" | "Eventos" | "Estoque" | "Propostas" | "Clientes";
+type Page = "Início" | "Eventos" | "Estoque" | "Propostas" | "Clientes" | "Reuniões";
 type ModalKind = "event" | "inventory" | "proposal" | "client";
 type ModalState = { kind: ModalKind; inventoryItem?: InventoryItem } | null;
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -98,6 +107,7 @@ type BackendState = {
   packages: PackageItem[];
   services: ServiceItem[];
   settings: CompanySettings | null;
+  meetings: Meeting[];
   healthy: boolean;
 };
 
@@ -111,6 +121,7 @@ const EMPTY_BACKEND: BackendState = {
   packages: [],
   services: [],
   settings: null,
+  meetings: [],
   healthy: false,
 };
 
@@ -137,6 +148,7 @@ const navigation: { label: Page; icon: LucideIcon }[] = [
   { label: "Estoque", icon: Archive },
   { label: "Propostas", icon: FileText },
   { label: "Clientes", icon: Users },
+  { label: "Reuniões", icon: NotebookPen },
 ];
 
 function Brand() {
@@ -167,18 +179,18 @@ function Sidebar({
       {open && (
         <button
           aria-label="Fechar menu"
-          className="fixed inset-0 z-30 bg-overlay lg:hidden"
+          className="fixed inset-0 z-30 bg-overlay xl:hidden"
           onClick={onClose}
         />
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-[264px] flex-col border-r border-border bg-sidebar px-5 py-7 transition-transform lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed inset-y-0 left-0 z-40 flex w-[264px] flex-col border-r border-border bg-sidebar px-5 py-7 transition-transform xl:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
         <div className="flex items-center justify-between">
           <Brand />
           <Button
             variant="icon"
-            className="h-10 w-10 lg:hidden"
+            className="h-10 w-10 xl:hidden"
             onClick={onClose}
             aria-label="Fechar menu"
           >
@@ -200,7 +212,7 @@ function Sidebar({
             </Button>
           ))}
         </nav>
-        <div className="mt-auto hidden lg:block">
+        <div className="mt-auto hidden xl:block">
           <div className="botanical-mark" aria-hidden="true">
             <Leaf />
             <Leaf />
@@ -385,6 +397,7 @@ function HomePage({
   dashboard,
   onPreview,
   onPdf,
+  meetings,
 }: {
   query: string;
   navigate: (page: Page) => void;
@@ -393,6 +406,7 @@ function HomePage({
   dashboard: DashboardOverview | null;
   onPreview: (id: string) => void;
   onPdf: (id: string) => void;
+  meetings: Meeting[];
 }) {
   const upcoming = dashboard?.upcoming_events ?? [];
   const shownEvents = useMemo(() => {
@@ -560,7 +574,7 @@ function HomePage({
         </article>
       </section>
 
-      <section className="mt-4 grid gap-4 xl:grid-cols-[1fr_1fr_1fr]">
+      <section className="mt-4 grid gap-4 xl:grid-cols-4">
         <article className="overflow-hidden rounded-lg border border-border bg-card shadow-soft">
           <SectionTitle icon={ClipboardList} action="Ver todas" onAction={() => navigate("Propostas")}>
             Propostas recentes
@@ -632,6 +646,22 @@ function HomePage({
                 Nenhum alerta automático pendente neste momento.
               </div>
             )}
+          </div>
+        </article>
+
+
+        <article className="overflow-hidden rounded-lg border border-border bg-card shadow-soft">
+          <SectionTitle icon={NotebookPen} action="Ver reuniões" onAction={() => navigate("Reuniões")}>
+            Reuniões recentes
+          </SectionTitle>
+          <div className="px-4">
+            {meetings.slice(0, 3).map((meeting) => (
+              <button key={meeting.id} className="grid w-full grid-cols-[auto_minmax(0,1fr)] gap-3 border-b border-border py-3 text-left last:border-0" onClick={() => navigate("Reuniões")}>
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-sand text-brand"><NotebookPen className="h-4 w-4" /></span>
+                <span className="min-w-0"><strong className="block truncate text-sm">{meeting.contact_name}</strong><span className="block truncate text-xs text-muted-foreground">{meeting.title || "Reunião"} · {new Intl.DateTimeFormat("pt-BR").format(new Date(meeting.meeting_at))}</span></span>
+              </button>
+            ))}
+            {!meetings.length && <p className="py-8 text-center text-xs text-muted-foreground">Nenhuma reunião registrada ainda.</p>}
           </div>
         </article>
 
@@ -1101,7 +1131,7 @@ function SettingsPage({
       <div className="grid gap-4 xl:grid-cols-[1.1fr_.9fr]">
         <form className="rounded-lg border border-border bg-card p-5 shadow-soft" onSubmit={saveSettings}>
           <h2 className="font-display text-2xl font-semibold">Dados da empresa</h2>
-          <p className="mt-1 text-xs text-muted-foreground">Alterações são gravadas pelo workflow 60.</p>
+          <p className="mt-1 text-xs text-muted-foreground">Atualize os dados usados nos documentos do Atelier.</p>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <ControlledField label="Nome da empresa" value={form.business_name} onChange={(value) => setForm((old) => ({ ...old, business_name: value }))} />
             <ControlledField label="Linha de atuação" value={form.business_line} onChange={(value) => setForm((old) => ({ ...old, business_line: value }))} />
@@ -2658,6 +2688,76 @@ function apiErrorMessage(error: unknown) {
   return "Erro inesperado ao carregar os dados.";
 }
 
+
+function LoginPage({ onLoggedIn }: { onLoggedIn: (user: AuthUser) => void }) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    setBusy(true); setError("");
+    try { const result = await atelierApi.auth.login(username, password, remember); onLoggedIn(result.user); }
+    catch (e) { setError(apiErrorMessage(e)); }
+    finally { setBusy(false); }
+  };
+
+  return <div className="login-shell min-h-screen bg-[#f8f1e7]">
+    <div className="grid min-h-screen xl:grid-cols-[1.18fr_.82fr]">
+      <section className="login-cover relative hidden overflow-hidden xl:block">
+        <img src={loginVisual} alt="Atelier Priscila Gefune" className="absolute inset-0 h-full w-full object-cover object-left" />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[#f7efe4]/15" />
+      </section>
+      <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-5 py-8 sm:px-8">
+        <div className="login-botanical login-botanical-top" aria-hidden="true" />
+        <div className="login-botanical login-botanical-bottom" aria-hidden="true" />
+        <form onSubmit={submit} className="relative z-10 w-full max-w-[520px] rounded-[28px] border border-[#dfc9aa] bg-[#fffaf3]/95 px-6 py-8 shadow-elevated sm:px-10 sm:py-10">
+          <div className="text-center"><p className="text-[10px] font-semibold uppercase tracking-[.34em] text-brand">Bem-vinda ao</p><p className="mt-1 text-xs uppercase tracking-[.3em] text-brand">Atelier Priscila Gefune</p><div className="mx-auto my-5 h-px w-28 bg-[#c9a56d]" /><h1 className="font-display text-5xl font-medium">Bem-vinda</h1><p className="mt-2 text-sm text-muted-foreground">Acesse sua área de gestão do Atelier.</p></div>
+          <div className="mt-8 space-y-5">
+            <label className="block"><span className="text-sm font-medium">Usuário</span><div className="relative mt-2"><User className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-brand"/><input autoComplete="username" type="text" value={username} onChange={e=>setUsername(e.target.value)} required className="h-14 w-full rounded-xl border border-input bg-white/70 pl-12 pr-4 text-base outline-none focus:ring-2 focus:ring-ring" placeholder="priscila.gefune" /></div></label>
+            <label className="block"><span className="text-sm font-medium">Senha</span><div className="relative mt-2"><input autoComplete="current-password" type={showPassword?"text":"password"} value={password} onChange={e=>setPassword(e.target.value)} required className="h-14 w-full rounded-xl border border-input bg-white/70 px-4 pr-12 text-base outline-none focus:ring-2 focus:ring-ring" placeholder="Digite sua senha"/><button type="button" onClick={()=>setShowPassword(v=>!v)} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground" aria-label={showPassword?"Ocultar senha":"Mostrar senha"}>{showPassword?<EyeOff className="h-5 w-5"/>:<Eye className="h-5 w-5"/>}</button></div></label>
+          </div>
+          <div className="mt-5 flex items-center justify-between gap-4 text-sm"><label className="flex items-center gap-2"><input type="checkbox" checked={remember} onChange={e=>setRemember(e.target.checked)} className="h-4 w-4 accent-[#9f753b]"/>Manter conectado</label><button type="button" onClick={()=>setError("Para redefinir a senha, use o workflow administrativo 08 ou fale com o responsável pelo sistema.")} className="text-brand underline underline-offset-4">Esqueci minha senha</button></div>
+          {error && <div className="mt-5 rounded-xl bg-blush px-4 py-3 text-sm text-danger">{error}</div>}
+          <button disabled={busy} className="mt-7 flex h-14 w-full items-center justify-center gap-3 rounded-xl bg-[#a77c40] text-lg font-semibold text-white shadow-button hover:bg-[#906a36] disabled:opacity-60">{busy?"Entrando...":"Entrar"}<ArrowRight className="h-5 w-5"/></button>
+          <div className="mt-7 flex items-center justify-center gap-3 text-xs text-muted-foreground"><span className="h-px w-12 bg-border"/><span>Acesso exclusivo</span><span className="h-px w-12 bg-border"/></div>
+        </form>
+      </section>
+    </div>
+  </div>;
+}
+
+function MeetingsPage({ query, meetings, clients, settings, refresh, announce }: { query: string; meetings: Meeting[]; clients: Client[]; settings: CompanySettings | null; refresh: () => Promise<void>; announce: (m:string)=>void }) {
+  const [editing, setEditing] = useState<Meeting | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [reportEmail, setReportEmail] = useState(settings?.email || "");
+  useEffect(()=>setReportEmail(settings?.email || ""),[settings?.email]);
+  const rows=meetings.filter(m=>`${m.contact_name} ${m.title||""} ${m.content_preview||""}`.toLowerCase().includes(query.toLowerCase()));
+  const saveEmail=async()=>{ try{await atelierApi.settings.update({email:reportEmail}); await refresh(); announce("E-mail de relatórios salvo");}catch(e){announce(apiErrorMessage(e));} };
+  const remove=async(id:string)=>{if(!confirm("Excluir esta reunião?"))return; try{await atelierApi.meetings.delete(id);await refresh();announce("Reunião excluída");}catch(e){announce(apiErrorMessage(e));}};
+  const send=async(id:string)=>{try{const r=await atelierApi.meetings.sendEmail(id);await refresh();announce(r.email_sent?"Relatório enviado por e-mail":"Reunião salva, mas o e-mail não foi enviado");}catch(e){announce(apiErrorMessage(e));}};
+  return <>
+    <PageHeader eyebrow="REGISTROS" title="Reuniões" description="Registre cada conversa, mantenha o histórico e tenha uma cópia por e-mail e PDF." action="Nova reunião" onAction={()=>setCreating(true)} />
+    <div className="mb-4 grid gap-3 rounded-lg border border-border bg-card p-4 shadow-soft md:grid-cols-[1fr_auto] md:items-end"><label><span className="text-xs font-semibold text-muted-foreground">E-mail para receber os relatórios</span><input value={reportEmail} onChange={e=>setReportEmail(e.target.value)} type="email" className="mt-1 h-11 w-full rounded-md border border-input bg-background px-3 text-sm" placeholder="priscila@email.com"/></label><Button variant="outline" className="h-11 px-5" onClick={()=>void saveEmail()}>Salvar e-mail</Button></div>
+    <div className="grid gap-3">
+      {rows.map(m=><article key={m.id} className="rounded-lg border border-border bg-card p-4 shadow-soft sm:p-5"><div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><NotebookPen className="h-5 w-5 text-brand"/><h2 className="font-display text-2xl font-semibold">{m.contact_name}</h2>{m.email_sent?<span className="rounded-full bg-sage px-2.5 py-1 text-[10px] font-semibold text-success">E-mail enviado</span>:<span className="rounded-full bg-sand px-2.5 py-1 text-[10px] font-semibold text-brand">Somente salvo</span>}</div><p className="mt-1 text-sm text-muted-foreground">{m.title||"Reunião"} · {new Intl.DateTimeFormat("pt-BR",{dateStyle:"medium",timeStyle:"short"}).format(new Date(m.meeting_at))}</p><p className="mt-3 line-clamp-3 whitespace-pre-wrap text-sm leading-relaxed">{m.content_preview||m.content}</p></div><div className="flex flex-wrap gap-2 md:justify-end"><Button variant="outline" className="h-9 px-3 text-xs" onClick={async()=>{const d=await atelierApi.meetings.detail(m.id);setEditing(d.data)}}>Abrir / editar</Button><Button variant="outline" className="h-9 px-3 text-xs" onClick={()=>void send(m.id)}><Send className="h-4 w-4"/>E-mail</Button><Button variant="outline" className="h-9 px-3 text-xs" onClick={()=>window.open(atelierApi.meetings.pdfUrl(m.id),"_blank")}><Download className="h-4 w-4"/>PDF</Button><Button variant="outline" className="h-9 px-3 text-xs text-danger" onClick={()=>void remove(m.id)}><Trash2 className="h-4 w-4"/>Excluir</Button></div></div></article>)}
+      {!rows.length&&<div className="rounded-lg border border-border bg-card py-16 text-center text-sm text-muted-foreground">Nenhuma reunião registrada.</div>}
+    </div>
+    {(creating||editing)&&<MeetingModal meeting={editing} clients={clients} defaultEmail={reportEmail} onClose={()=>{setCreating(false);setEditing(null)}} onSaved={async(m,sendEmail)=>{await refresh();setCreating(false);setEditing(null); if(sendEmail){try{await atelierApi.meetings.sendEmail(m.id);await refresh();announce("Reunião salva e envio processado");}catch(e){announce(`Reunião salva. ${apiErrorMessage(e)}`)}}else announce("Reunião salva");}}/>}
+  </>;
+}
+
+function MeetingModal({meeting,clients,defaultEmail,onClose,onSaved}:{meeting:Meeting|null;clients:Client[];defaultEmail:string;onClose:()=>void;onSaved:(m:Meeting,send:boolean)=>Promise<void>}){
+  const local=(iso?:string)=>{const d=iso?new Date(iso):new Date();const pad=(n:number)=>String(n).padStart(2,"0");return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`};
+  const [clientId,setClientId]=useState(meeting?.client_id||""); const [name,setName]=useState(meeting?.contact_name||""); const [contactEmail,setContactEmail]=useState(meeting?.contact_email||""); const [when,setWhen]=useState(local(meeting?.meeting_at)); const [title,setTitle]=useState(meeting?.title||""); const [content,setContent]=useState(meeting?.content||""); const [emailTo,setEmailTo]=useState(meeting?.email_to||defaultEmail||""); const [sendEmail,setSendEmail]=useState(Boolean(emailTo)); const [busy,setBusy]=useState(false); const [error,setError]=useState("");
+  const chooseClient=(id:string)=>{setClientId(id);const c=clients.find(x=>x.id===id);if(c){setName(c.name);setContactEmail(c.email||"")}};
+  const submit=async(e:FormEvent)=>{e.preventDefault();setBusy(true);setError("");try{const body={client_id:clientId||null,contact_name:name,contact_email:contactEmail||null,meeting_at:new Date(when).toISOString(),title:title||null,content,email_to:emailTo||null};const r=meeting?await atelierApi.meetings.update(meeting.id,body):await atelierApi.meetings.create(body);await onSaved(r.data,sendEmail);}catch(err){setError(apiErrorMessage(err));setBusy(false)}};
+  return <div className="fixed inset-0 z-[70] flex items-end justify-center bg-overlay p-0 md:items-center md:p-5"><form onSubmit={submit} className="max-h-[96vh] w-full overflow-y-auto rounded-t-2xl bg-card shadow-elevated md:max-w-4xl md:rounded-2xl"><div className="flex items-start justify-between border-b border-border bg-peach px-5 py-4 sm:px-6"><div><p className="text-[10px] font-semibold uppercase tracking-[.2em] text-brand">REUNIÃO</p><h2 className="mt-1 font-display text-3xl font-semibold">{meeting?"Editar relatório":"Nova reunião"}</h2></div><Button type="button" variant="icon" className="h-10 w-10" onClick={onClose}><X className="h-5 w-5"/></Button></div><div className="grid gap-4 p-5 sm:p-6 md:grid-cols-2"><label className="md:col-span-2"><span className="text-xs font-semibold text-muted-foreground">Cliente cadastrado (opcional)</span><select value={clientId} onChange={e=>chooseClient(e.target.value)} className="mt-1 h-11 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="">Contato ainda não cadastrado</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label><ControlledField label="Cliente / contato" value={name} onChange={setName}/><ControlledField label="E-mail do contato (opcional)" type="email" value={contactEmail} onChange={setContactEmail}/><label><span className="text-xs font-semibold text-muted-foreground">Data e hora</span><input type="datetime-local" value={when} onChange={e=>setWhen(e.target.value)} required className="mt-1 h-11 w-full rounded-md border border-input bg-background px-3 text-sm"/></label><ControlledField label="Assunto" value={title} onChange={setTitle}/><div className="md:col-span-2"><label className="text-xs font-semibold text-muted-foreground">Anotações da reunião</label><textarea autoFocus={!meeting} value={content} onChange={e=>setContent(e.target.value)} required className="mt-1 min-h-[300px] w-full rounded-xl border border-input bg-background px-4 py-3 text-base leading-relaxed outline-none focus:ring-2 focus:ring-ring" placeholder="Escreva aqui tudo que foi conversado, decisões, preferências, próximos passos..."/></div><div className="md:col-span-2 rounded-xl bg-sand/60 p-4"><label className="text-xs font-semibold text-muted-foreground">Enviar uma cópia para</label><input type="email" value={emailTo} onChange={e=>setEmailTo(e.target.value)} className="mt-1 h-11 w-full rounded-md border border-input bg-background px-3 text-sm" placeholder="E-mail da Priscila"/><label className="mt-3 flex items-center gap-2 text-sm"><input type="checkbox" checked={sendEmail} onChange={e=>setSendEmail(e.target.checked)} disabled={!emailTo}/>Enviar relatório por e-mail depois de salvar</label><p className="mt-1 text-xs text-muted-foreground">Mesmo se o e-mail falhar, o conteúdo já terá sido salvo no sistema.</p></div>{error&&<div className="md:col-span-2 rounded-lg bg-blush px-4 py-3 text-sm text-danger">{error}</div>}</div><div className="sticky bottom-0 flex flex-wrap justify-end gap-2 border-t border-border bg-card/95 px-5 py-4 backdrop-blur"><Button type="button" variant="outline" className="h-11 px-5" onClick={onClose}>Cancelar</Button><Button type="submit" variant="primary" className="h-11 px-6" disabled={busy}>{busy?"Salvando...":"Salvar reunião"}</Button></div></form></div>;
+}
+
 function todayIso() {
   const date = new Date();
   const year = date.getFullYear();
@@ -2667,6 +2767,8 @@ function todayIso() {
 }
 
 function Dashboard() {
+  const [authChecking, setAuthChecking] = useState(true);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [active, setActive] = useState<Page>("Início");
   const [query, setQuery] = useState("");
@@ -2698,6 +2800,7 @@ function Dashboard() {
       atelierApi.proposals.list(),
       atelierApi.packages.list(),
       atelierApi.services.list(),
+      atelierApi.meetings.list(),
       atelierApi.settings.get(),
     ]);
 
@@ -2716,6 +2819,7 @@ function Dashboard() {
       "Propostas",
       "Pacotes",
       "Serviços",
+      "Reuniões",
       "Preferências",
     ].forEach((label, index) => fail(index, label));
 
@@ -2728,7 +2832,8 @@ function Dashboard() {
       proposals: results[6].status === "fulfilled" ? results[6].value.data : previous.proposals,
       packages: results[7].status === "fulfilled" ? results[7].value.data : previous.packages,
       services: results[8].status === "fulfilled" ? results[8].value.data : previous.services,
-      settings: results[9].status === "fulfilled" ? results[9].value.data : previous.settings,
+      meetings: results[9].status === "fulfilled" ? results[9].value.data : previous.meetings,
+      settings: results[10].status === "fulfilled" ? results[10].value.data : previous.settings,
       healthy: results[0].status === "fulfilled" && results[0].value.ok === true,
     }));
     setIssues(nextIssues);
@@ -2736,7 +2841,9 @@ function Dashboard() {
   }, []);
 
   useEffect(() => {
-    void refresh();
+    let alive = true;
+    atelierApi.auth.session().then((r) => { if (!alive) return; setUser(r.user); setAuthChecking(false); void refresh(); }).catch(() => { if (!alive) return; setUser(null); setAuthChecking(false); });
+    return () => { alive = false; };
   }, [refresh]);
 
   const navigate = (page: Page) => {
@@ -2774,12 +2881,17 @@ function Dashboard() {
 
   const alertCount = backend.dashboard?.alerts?.length ?? 0;
 
+  if (authChecking) return <div className="grid min-h-screen place-items-center bg-background"><div className="flex items-center gap-2 text-sm text-muted-foreground"><RefreshCw className="h-4 w-4 animate-spin"/>Carregando...</div></div>;
+  if (!user) return <LoginPage onLoggedIn={(u) => { setUser(u); void refresh(); }} />;
+
+  const logout = async () => { try { await atelierApi.auth.logout(); } finally { setUser(null); setBackend(EMPTY_BACKEND); } };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} active={active} onSelect={navigate} />
-      <div className="lg:pl-[264px]">
-        <header className="sticky top-0 z-20 grid h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-surface/95 px-4 backdrop-blur-md sm:px-6 lg:px-7">
-          <Button variant="icon" className="h-10 w-10 lg:hidden" onClick={() => setMenuOpen(true)} aria-label="Abrir menu"><Menu className="h-5 w-5" /></Button>
+      <div className="xl:pl-[264px]">
+        <header className="sticky top-0 z-20 grid h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-surface/95 px-4 backdrop-blur-md sm:px-6 xl:px-7">
+          <Button variant="icon" className="h-10 w-10 xl:hidden" onClick={() => setMenuOpen(true)} aria-label="Abrir menu"><Menu className="h-5 w-5" /></Button>
           <label className="relative min-w-0 max-w-xl">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <span className="sr-only">Buscar</span>
@@ -2793,12 +2905,12 @@ function Dashboard() {
           <div className="flex shrink-0 items-center gap-1 sm:gap-3">
             <Button variant="icon" className="h-10 w-10" aria-label="Atualizar dados" onClick={() => void refresh()} disabled={loading}><RefreshCw className={`h-5 w-5 ${loading ? "animate-spin" : ""}`} /></Button>
             <Button variant="primary" className="h-10 px-3 sm:px-5" onClick={() => openModal("event")}><Plus className="h-4 w-4" /><span className="hidden sm:inline">Novo evento</span></Button>
-            <Button variant="icon" className="relative h-10 w-10" aria-label="Notificações" onClick={() => announce(alertCount ? `Você tem ${alertCount} alerta(s)` : "Sem alertas pendentes")}><Bell className="h-5 w-5" />{alertCount > 0 && <span className="absolute right-2 top-1.5 h-2 w-2 rounded-full bg-danger" />}</Button>
-            <Button className="mobile-profile h-11 px-2" onClick={() => announce(backend.healthy ? "Sistema conectado" : "Verifique a conexão do sistema")}><span className="grid h-8 w-8 place-items-center rounded-full bg-avatar font-display text-sm font-semibold text-primary">PG</span><span>Olá, Priscila Gefune</span><ChevronDown className="h-4 w-4" /></Button>
+            <Button variant="icon" className="relative h-10 w-10" aria-label="Notificações" onClick={() => announce(alertCount ? `Você tem ${alertCount} alerta(s)` : "Sem alertas pendentes")}><Bell className="h-5 w-5" />{alertCount > 0 && <span className="absolute right-2 top-1.5 h-2 w-2 rounded-full bg-danger" />}</Button><Button variant="icon" className="h-10 w-10 xl:hidden" aria-label="Sair" onClick={() => void logout()}><LogOut className="h-5 w-5" /></Button>
+            <Button className="mobile-profile h-11 px-2" onClick={() => void logout()} title="Sair"><span className="grid h-8 w-8 place-items-center rounded-full bg-avatar font-display text-sm font-semibold text-primary">PG</span><span>Olá, {user.name}</span><LogOut className="h-4 w-4" /></Button>
           </div>
         </header>
 
-        <main className="mx-auto max-w-[1600px] px-4 pb-9 pt-5 sm:px-6 lg:px-7">
+        <main className="mx-auto max-w-[1600px] px-4 pb-9 pt-5 sm:px-6 xl:px-7">
           {issues.length > 0 && (
             <div className="mb-4 rounded-lg border border-danger/20 bg-blush px-4 py-3 text-xs text-danger">
               <strong>Não foi possível carregar alguns dados:</strong> {issues.join(" · ")}
@@ -2823,6 +2935,7 @@ function Dashboard() {
               dashboard={backend.dashboard}
               onPreview={previewProposal}
               onPdf={openPdf}
+              meetings={backend.meetings}
             />
           )}
           {active === "Eventos" && <EventsPage query={query} events={backend.events} openModal={openModal} announce={announce} onReserve={setReservationEvent} onDetail={setEventDetailId} />}
@@ -2839,6 +2952,7 @@ function Dashboard() {
             <ProposalsPage query={query} proposals={backend.proposals} openModal={openModal} onPreview={previewProposal} onPdf={openPdf} onEdit={setProposalEditorId} onDelete={(id) => void deleteProposal(id)} />
           )}
           {active === "Clientes" && <ClientsPage query={query} clients={backend.clients} events={backend.events} openModal={openModal} announce={announce} />}
+          {active === "Reuniões" && <MeetingsPage query={query} meetings={backend.meetings} clients={backend.clients} settings={backend.settings} refresh={refresh} announce={announce} />}
         </main>
       </div>
 

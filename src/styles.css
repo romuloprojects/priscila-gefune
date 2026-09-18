@@ -214,3 +214,21 @@
 @media (max-width: 47.99rem) {
   .mobile-profile { display: none; }
 }
+
+
+/* Login homologado + tablet */
+.login-shell { min-height: 100dvh; }
+.login-cover img { object-position: left center; }
+.login-botanical { position:absolute; width:180px; height:240px; opacity:.18; pointer-events:none; background:radial-gradient(ellipse at center, transparent 55%, color-mix(in oklab,var(--brand) 55%,transparent) 56% 57%, transparent 58%); }
+.login-botanical-top { top:-50px; right:-40px; transform:rotate(18deg); }
+.login-botanical-bottom { bottom:-80px; left:-60px; transform:rotate(-24deg); }
+
+@media (min-width: 48rem) and (max-width: 79.99rem) {
+  .metric-icon { width:3rem; height:3rem; }
+  button, input, select, textarea { touch-action: manipulation; }
+  main { max-width:100%; }
+}
+
+@media (max-width: 63.99rem) {
+  .mobile-profile { display: none; }
+}

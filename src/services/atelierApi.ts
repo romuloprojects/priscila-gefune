@@ -337,6 +337,27 @@ export type ProposalDetail = {
   }>;
 };
 
+
+export type AuthUser = { id: string; name: string; username: string; email: string | null };
+
+export type Meeting = {
+  id: string;
+  client_id: string | null;
+  contact_name: string;
+  contact_email: string | null;
+  meeting_at: string;
+  title: string | null;
+  content?: string;
+  content_preview?: string;
+  email_to: string | null;
+  email_sent: boolean;
+  email_sent_at: string | null;
+  email_last_error: string | null;
+  created_at: string;
+  updated_at: string;
+  client_name?: string | null;
+};
+
 export type CompanySettings = {
   id: number;
   business_name: string;
@@ -354,6 +375,23 @@ export type CompanySettings = {
 };
 
 export const atelierApi = {
+  auth: {
+    session: () => requestJson<{ ok: true; authenticated: true; user: AuthUser; expires_at: string }>("/auth/session"),
+    login: (username: string, password: string, remember: boolean) =>
+      requestJson<{ ok: true; authenticated: true; user: AuthUser }>("/auth/login", { method: "POST", body: JSON.stringify({ username, password, remember }) }),
+    logout: () => requestJson<{ ok: true }>("/auth/logout", { method: "POST", body: JSON.stringify({}) }),
+  },
+
+  meetings: {
+    list: (search = "") => requestJson<{ ok: true; data: Meeting[] }>(`/meetings${qs({ search })}`),
+    detail: (id: string) => requestJson<{ ok: true; data: Meeting }>(`/meeting-detail${qs({ id })}`),
+    create: (body: Record<string, unknown>) => requestJson<{ ok: true; data: Meeting }>("/meetings", { method: "POST", body: JSON.stringify(body) }),
+    update: (id: string, body: Record<string, unknown>) => requestJson<{ ok: true; data: Meeting }>("/meeting-update", { method: "PATCH", body: JSON.stringify({ ...body, id }) }),
+    delete: (id: string) => requestJson<{ ok: true; deleted_id: string }>(`/meeting-delete${qs({ id })}`, { method: "DELETE" }),
+    sendEmail: (id: string) => requestJson<{ ok: true; email_sent: boolean; email_last_error?: string | null }>("/meeting-email", { method: "POST", body: JSON.stringify({ id }) }),
+    pdfUrl: (id: string) => `${API_BASE}/meeting-pdf${qs({ id })}`,
+  },
+
   health: () =>
     requestJson<{ ok: true; postgres: unknown; gotenberg: unknown }>("/health"),
 
