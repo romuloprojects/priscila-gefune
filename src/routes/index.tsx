@@ -2428,7 +2428,7 @@ function ProposalEditor({
         guest_count: detail.data.guest_count ?? "",
         package_price: Number(detail.data.package_price_snapshot ?? 0),
         pricing_mode: detail.data.pricing_mode || "manual",
-        manual_total: detail.data.pricing_mode === "manual" ? detail.data.manual_total ?? detail.data.total ?? 0 : "",
+        manual_total: detail.data.pricing_mode === "manual" ? Number(detail.data.manual_total ?? detail.data.total ?? 0) : "",
         show_item_prices: Boolean(detail.data.show_item_prices),
         show_service_prices: Boolean(detail.data.show_service_prices),
         discount_type: detail.data.discount_type,
@@ -2590,7 +2590,7 @@ function ProposalEditor({
                   <div className="mt-4 rounded-lg bg-sand p-4">
                     <div className="flex justify-between text-xs text-muted-foreground"><span>Soma interna dos detalhes</span><strong className="text-foreground">{formatCurrency(detail.data.subtotal)}</strong></div>
                     <div className="mt-2 flex justify-between text-xs text-muted-foreground"><span>Desconto</span><strong className="text-danger">{formatCurrency(detail.data.discount_amount)}</strong></div>
-                    <div className="mt-3 flex items-end justify-between border-t border-brand/15 pt-3"><span className="text-xs font-semibold uppercase tracking-wide text-brand">Total</span><strong className="font-display text-3xl">{formatCurrency(detail.data.total)}</strong></div>
+                    <div className="mt-3 flex items-end justify-between border-t border-brand/15 pt-3"><span className="text-xs font-semibold uppercase tracking-wide text-brand">Total</span><strong className="font-display text-3xl">{formatCurrency(detail.data.pricing_mode === "manual" ? (detail.data.manual_total ?? detail.data.total ?? 0) : detail.data.total)}</strong></div>
                     <p className="mt-2 text-[10px] text-muted-foreground">{detail.data.pricing_mode === "manual" ? "Os valores internos podem ficar em branco. O cliente recebe somente o investimento final, salvo se você habilitar a exibição dos preços acima." : "O total é recalculado automaticamente ao salvar."}</p>
                   </div>
                 </section>
