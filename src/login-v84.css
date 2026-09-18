@@ -1,0 +1,284 @@
+/*
+ * Login V8.4 — mesmo padrão estrutural usado no ANCAR V5.6.1:
+ * folha exclusiva e versionada, carregada APÓS o CSS global.
+ * O login não depende de utilities Tailwind para o layout crítico.
+ */
+.apg-login-v84,
+.apg-login-v84 * { box-sizing: border-box; }
+
+.apg-login-v84 {
+  width: 100%;
+  height: 100vh;
+  height: 100svh;
+  min-height: 620px;
+  display: grid;
+  grid-template-columns: minmax(0, 58%) minmax(430px, 42%);
+  overflow: hidden;
+  background: #fbf7f1;
+  color: #2b211b;
+  font-family: "Manrope", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.apg-login-v84-hero {
+  position: relative;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #e9dcc9;
+  border-right: 1px solid rgba(176, 137, 83, .18);
+}
+.apg-login-v84-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 42px;
+  background: linear-gradient(90deg, transparent, rgba(251,247,241,.24));
+  pointer-events: none;
+}
+.apg-login-v84-hero img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  object-position: center center;
+}
+
+.apg-login-v84-panel {
+  position: relative;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(208,176,126,.12), transparent 27rem),
+    radial-gradient(circle at 0% 100%, rgba(208,176,126,.07), transparent 24rem),
+    #fbf7f1;
+}
+.apg-login-v84-frame {
+  position: absolute;
+  inset: 4.1%;
+  border: 1px solid rgba(184, 146, 91, .36);
+  border-radius: 26px;
+  pointer-events: none;
+}
+.apg-login-v84-scroll {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 42px 48px;
+}
+.apg-login-v84-form {
+  width: min(100%, 500px);
+  margin: auto;
+  padding: 18px 6px 22px;
+}
+.apg-login-v84-head { text-align: center; }
+.apg-login-v84-eyebrow,
+.apg-login-v84-brand {
+  margin: 0;
+  color: #8f6a3a;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: .34em;
+  font-size: 11px;
+}
+.apg-login-v84-brand { margin-top: 8px; font-size: 12px; }
+.apg-login-v84-divider {
+  width: 145px;
+  margin: 22px auto 30px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  color: #b98a4b;
+}
+.apg-login-v84-divider span { height: 1px; background: #c9a56d; flex: 1; }
+.apg-login-v84-divider b { font-size: 18px; font-weight: 400; }
+.apg-login-v84-head h1 {
+  margin: 0;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(50px, 4.2vw, 66px);
+  font-weight: 500;
+  line-height: .96;
+  color: #251b15;
+}
+.apg-login-v84-head > p:last-child {
+  margin: 17px 0 0;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #6e6258;
+}
+.apg-login-v84-fields {
+  margin-top: 42px;
+  display: grid;
+  gap: 22px;
+}
+.apg-login-v84-fields label > span {
+  display: block;
+  margin-bottom: 9px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #31261f;
+}
+.apg-login-v84-input { position: relative; }
+.apg-login-v84-input > svg {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  color: #9d7440;
+  pointer-events: none;
+}
+.apg-login-v84-input input {
+  display: block;
+  width: 100%;
+  height: 60px;
+  border: 1px solid #d8cfc3;
+  border-radius: 12px;
+  background: rgba(255,255,255,.72);
+  padding: 0 52px 0 52px;
+  color: #3d342d;
+  font: inherit;
+  font-size: 15px;
+  outline: none;
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.apg-login-v84-input input::placeholder { color: #a89d94; }
+.apg-login-v84-input input:focus {
+  border-color: #b98a4b;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(185,138,75,.12);
+}
+.apg-login-v84-eye {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #776a60;
+  cursor: pointer;
+}
+.apg-login-v84-eye:hover { background: rgba(167,124,64,.08); }
+.apg-login-v84-eye svg { width: 20px; height: 20px; }
+.apg-login-v84-options {
+  margin-top: 21px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  color: #5c5047;
+  font-size: 13px;
+}
+.apg-login-v84-options label { display: flex; align-items: center; gap: 9px; cursor: pointer; }
+.apg-login-v84-options input { width: 18px; height: 18px; accent-color: #9f753b; }
+.apg-login-v84-options button {
+  border: 0;
+  background: none;
+  color: #79552f;
+  font: inherit;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.apg-login-v84-error {
+  margin-top: 18px;
+  padding: 12px 14px;
+  border: 1px solid #e9beba;
+  border-radius: 11px;
+  background: #fff0ee;
+  color: #a33b32;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.apg-login-v84-submit {
+  width: 100%;
+  height: 61px;
+  margin-top: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  border: 0;
+  border-radius: 12px;
+  background: #a77c40;
+  color: #fff;
+  font: inherit;
+  font-size: 19px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 10px 28px rgba(126,91,46,.18);
+  transition: background .18s ease, transform .18s ease;
+}
+.apg-login-v84-submit:hover { background: #946b35; transform: translateY(-1px); }
+.apg-login-v84-submit:disabled { opacity: .6; cursor: wait; transform: none; }
+.apg-login-v84-submit svg { width: 20px; height: 20px; }
+.apg-login-v84-foot {
+  margin-top: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #87796d;
+  font-size: 11px;
+}
+.apg-login-v84-foot span { width: 46px; height: 1px; background: #dcc6a4; }
+.apg-login-v84-foot svg { width: 14px; height: 14px; color: #a77c40; flex: 0 0 auto; }
+.apg-login-v84-foot em { font-style: normal; text-align: center; }
+
+/* ANCAR pattern: desktop/landscape locked to viewport, scroll only in form pane when height is short. */
+@media (max-height: 760px) and (min-width: 900px) {
+  .apg-login-v84-scroll { align-items: flex-start; padding-top: 28px; padding-bottom: 28px; }
+  .apg-login-v84-form { padding-top: 8px; }
+  .apg-login-v84-divider { margin-top: 14px; margin-bottom: 20px; }
+  .apg-login-v84-fields { margin-top: 30px; gap: 16px; }
+  .apg-login-v84-input input { height: 54px; }
+  .apg-login-v84-submit { height: 56px; margin-top: 20px; }
+  .apg-login-v84-foot { margin-top: 18px; }
+}
+
+@media (min-width: 900px) and (max-width: 1180px) {
+  .apg-login-v84 { grid-template-columns: minmax(0, 52%) minmax(430px, 48%); }
+  .apg-login-v84-scroll { padding: 34px 30px; }
+}
+
+/* Tablet portrait / mobile: single clean panel, same behavior used in ANCAR responsive login. */
+@media (max-width: 899px) {
+  .apg-login-v84 {
+    height: auto;
+    min-height: 100svh;
+    display: block;
+    overflow: visible;
+  }
+  .apg-login-v84-hero { display: none; }
+  .apg-login-v84-panel { min-height: 100svh; height: auto; overflow: visible; }
+  .apg-login-v84-scroll {
+    position: relative;
+    min-height: 100svh;
+    overflow: visible;
+    padding: 52px 30px;
+  }
+  .apg-login-v84-frame { inset: 18px; border-radius: 22px; }
+  .apg-login-v84-form { width: min(100%, 520px); }
+}
+
+@media (max-width: 520px) {
+  .apg-login-v84-scroll { padding: 42px 24px; }
+  .apg-login-v84-form { padding-left: 6px; padding-right: 6px; }
+  .apg-login-v84-head h1 { font-size: 48px; }
+  .apg-login-v84-options { align-items: flex-start; flex-direction: column; }
+  .apg-login-v84-foot span { width: 22px; }
+}

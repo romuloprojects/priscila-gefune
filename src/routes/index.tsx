@@ -2706,142 +2706,268 @@ function LoginPage({ onLoggedIn }: { onLoggedIn: (user: AuthUser) => void }) {
     finally { setBusy(false); }
   };
 
-  return <div className="login-v83">
-    <div className="login-v83-layout">
-      <section className="login-v83-cover" aria-label="Atelier Priscila Gefune">
+  return (
+    <main className="apg-login-v84">
+      <section className="apg-login-v84-hero" aria-label="Atelier Priscila Gefune">
         <img src={loginVisual} alt="Atelier Priscila Gefune" />
       </section>
 
-      <section className="login-v83-pane">
-        <div className="login-v83-frame" aria-hidden="true" />
-        <form onSubmit={submit} className="login-v83-form">
-          <div className="login-v83-head">
-            <p className="login-v83-eyebrow">Bem-vinda ao</p>
-            <p className="login-v83-brand">Atelier Priscila Gefune</p>
-            <div className="login-v83-divider"><span /><b>♡</b><span /></div>
-            <h1>Bem-vinda</h1>
-            <p className="login-v83-subtitle">Acesse sua área de gestão do Atelier.</p>
-          </div>
+      <section className="apg-login-v84-panel">
+        <div className="apg-login-v84-frame" aria-hidden="true" />
+        <div className="apg-login-v84-scroll">
+          <form onSubmit={submit} className="apg-login-v84-form">
+            <header className="apg-login-v84-head">
+              <p className="apg-login-v84-eyebrow">Bem-vinda ao</p>
+              <p className="apg-login-v84-brand">Atelier Priscila Gefune</p>
+              <div className="apg-login-v84-divider"><span /><b>♡</b><span /></div>
+              <h1>Bem-vinda</h1>
+              <p>Acesse sua área de gestão do Atelier.</p>
+            </header>
 
-          <div className="login-v83-fields">
-            <label>
-              <span>Usuário</span>
-              <div className="login-v83-input-wrap">
-                <User aria-hidden="true" />
-                <input autoComplete="username" type="text" value={username} onChange={e=>setUsername(e.target.value)} required placeholder="priscila.gefune" />
-              </div>
-            </label>
-            <label>
-              <span>Senha</span>
-              <div className="login-v83-input-wrap">
-                <LockKeyhole aria-hidden="true" />
-                <input autoComplete="current-password" type={showPassword?"text":"password"} value={password} onChange={e=>setPassword(e.target.value)} required placeholder="Digite sua senha" />
-                <button type="button" className="login-v83-eye" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?"Ocultar senha":"Mostrar senha"}>{showPassword?<EyeOff />:<Eye />}</button>
-              </div>
-            </label>
-          </div>
+            <div className="apg-login-v84-fields">
+              <label>
+                <span>Usuário</span>
+                <div className="apg-login-v84-input">
+                  <User aria-hidden="true" />
+                  <input autoComplete="username" type="text" value={username} onChange={e=>setUsername(e.target.value)} required placeholder="priscila.gefune" />
+                </div>
+              </label>
+              <label>
+                <span>Senha</span>
+                <div className="apg-login-v84-input">
+                  <LockKeyhole aria-hidden="true" />
+                  <input autoComplete="current-password" type={showPassword?"text":"password"} value={password} onChange={e=>setPassword(e.target.value)} required placeholder="Digite sua senha" />
+                  <button type="button" className="apg-login-v84-eye" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?"Ocultar senha":"Mostrar senha"}>{showPassword?<EyeOff />:<Eye />}</button>
+                </div>
+              </label>
+            </div>
 
-          <div className="login-v83-options">
-            <label><input type="checkbox" checked={remember} onChange={e=>setRemember(e.target.checked)} /> <span>Manter conectado</span></label>
-            <button type="button" onClick={()=>setError("Para redefinir a senha, fale com o responsável pelo sistema.")}>Esqueci minha senha</button>
-          </div>
+            <div className="apg-login-v84-options">
+              <label><input type="checkbox" checked={remember} onChange={e=>setRemember(e.target.checked)} /><span>Manter conectado</span></label>
+              <button type="button" onClick={()=>setError("Para redefinir a senha, fale com o responsável pelo sistema.")}>Esqueci minha senha</button>
+            </div>
 
-          {error && <div className="login-v83-error">{error}</div>}
-          <button disabled={busy} className="login-v83-submit">{busy?"Entrando...":"Entrar"}<ArrowRight /></button>
-          <div className="login-v83-foot"><span/><LockKeyhole/><em>Acesso exclusivo ao Atelier Priscila Gefune</em><span/></div>
-        </form>
+            {error && <div className="apg-login-v84-error">{error}</div>}
+            <button disabled={busy} className="apg-login-v84-submit">{busy?"Entrando...":"Entrar"}<ArrowRight /></button>
+            <div className="apg-login-v84-foot"><span/><LockKeyhole/><em>Acesso exclusivo ao Atelier Priscila Gefune</em><span/></div>
+          </form>
+        </div>
       </section>
-    </div>
-  </div>;
+    </main>
+  );
 }
 
-function MeetingsPage({ query, meetings, clients, settings, refresh, announce }: { query: string; meetings: Meeting[]; clients: Client[]; settings: CompanySettings | null; refresh: () => Promise<void>; announce: (m:string)=>void }) {
+function MeetingsPage({ query, meetings, settings, refresh, announce }: { query: string; meetings: Meeting[]; clients: Client[]; settings: CompanySettings | null; refresh: () => Promise<void>; announce: (m:string)=>void }) {
   const [editing, setEditing] = useState<Meeting | null>(null);
   const [creating, setCreating] = useState(false);
   const [reportEmail, setReportEmail] = useState(settings?.email || "");
   useEffect(()=>setReportEmail(settings?.email || ""),[settings?.email]);
-  const rows=meetings.filter(m=>`${m.contact_name} ${m.title||""} ${m.content_preview||""}`.toLowerCase().includes(query.toLowerCase()));
-  const saveEmail=async()=>{ try{await atelierApi.settings.update({email:reportEmail}); await refresh(); announce("E-mail de relatórios salvo");}catch(e){announce(apiErrorMessage(e));} };
-  const remove=async(id:string)=>{if(!confirm("Excluir esta reunião?"))return; try{await atelierApi.meetings.delete(id);await refresh();announce("Reunião excluída");}catch(e){announce(apiErrorMessage(e));}};
-  const send=async(id:string)=>{try{const r=await atelierApi.meetings.sendEmail(id);await refresh();announce(r.email_sent?"Relatório enviado por e-mail":"Reunião salva, mas o e-mail não foi enviado");}catch(e){announce(apiErrorMessage(e));}};
-  const afterSave=async(m:Meeting)=>{
+
+  const rows = meetings.filter((meeting) =>
+    `${meeting.contact_name} ${meeting.title || ""} ${meeting.content_preview || meeting.content || ""}`
+      .toLocaleLowerCase("pt-BR")
+      .includes(query.trim().toLocaleLowerCase("pt-BR")),
+  );
+
+  const saveEmail = async () => {
+    try {
+      await atelierApi.settings.update({ email: reportEmail.trim() || null });
+      await refresh();
+      announce("E-mail de relatórios salvo");
+    } catch (error) {
+      announce(apiErrorMessage(error));
+    }
+  };
+
+  const remove = async (id:string) => {
+    if (!window.confirm("Excluir esta reunião? Esta ação não pode ser desfeita.")) return;
+    try {
+      await atelierApi.meetings.delete(id);
+      await refresh();
+      announce("Reunião excluída");
+    } catch (error) {
+      announce(apiErrorMessage(error));
+    }
+  };
+
+  const send = async (id:string) => {
+    try {
+      const result = await atelierApi.meetings.sendEmail(id);
+      await refresh();
+      announce(result.email_sent ? "Relatório enviado por e-mail" : "Reunião salva, mas o e-mail não foi enviado");
+    } catch (error) {
+      announce(apiErrorMessage(error));
+    }
+  };
+
+  const afterSave = async (meeting:Meeting) => {
     await refresh();
     setCreating(false);
     setEditing(null);
-    if (reportEmail.trim()) {
-      try {
-        const r=await atelierApi.meetings.sendEmail(m.id);
-        await refresh();
-        announce(r.email_sent?"Reunião salva e relatório enviado por e-mail":"Reunião salva. O envio do e-mail não foi concluído.");
-      } catch(e) {
-        announce(`Reunião salva. ${apiErrorMessage(e)}`);
-      }
-    } else {
-      announce("Reunião salva. Configure o e-mail de relatórios para receber uma cópia automaticamente.");
+    if (!reportEmail.trim()) {
+      announce("Reunião salva. Configure o e-mail dos relatórios para receber uma cópia automaticamente.");
+      return;
+    }
+    try {
+      const result = await atelierApi.meetings.sendEmail(meeting.id);
+      await refresh();
+      announce(result.email_sent ? "Reunião salva e relatório enviado por e-mail" : "Reunião salva. O envio do e-mail não foi concluído.");
+    } catch (error) {
+      announce(`Reunião salva. ${apiErrorMessage(error)}`);
     }
   };
+
   return <>
-    <PageHeader eyebrow="REGISTROS" title="Reuniões" description="Use como um caderno digital: registre a conversa, mantenha o histórico e gere uma cópia por e-mail ou PDF." action="Nova reunião" onAction={()=>setCreating(true)} />
-
-    <div className="meeting-email-config">
-      <div>
-        <span className="meeting-config-label">E-mail para receber os relatórios</span>
-        <p>Ao salvar uma reunião, o sistema envia uma cópia automaticamente para este endereço. Você pode reenviar depois pelo histórico.</p>
+    <section className="relative min-h-[150px] overflow-hidden rounded-lg border border-border bg-surface px-5 py-6 shadow-soft sm:px-7">
+      <img src={floralImage} width={1920} height={1024} alt="Arranjo de rosas em tons suaves" className="absolute inset-0 h-full w-full object-cover object-right" />
+      <div className="absolute inset-0 bg-hero-wash" />
+      <div className="relative z-10 max-w-3xl">
+        <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-brand">REGISTROS</p>
+        <h1 className="font-display text-4xl font-medium leading-none sm:text-5xl">Reuniões</h1>
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">Use como um caderno digital: registre a conversa, mantenha o histórico e gere uma cópia por e-mail ou PDF.</p>
       </div>
-      <input value={reportEmail} onChange={e=>setReportEmail(e.target.value)} type="email" placeholder="priscila@email.com" />
-      <Button variant="outline" className="h-11 px-5" onClick={()=>void saveEmail()}>Salvar e-mail</Button>
-    </div>
+      <p className="relative z-10 mt-4 hidden text-right font-display text-xl italic text-brand/80 xl:block">Mais que eventos, histórias reais.</p>
+    </section>
 
-    <div className="grid gap-3">
-      {rows.map(m=><article key={m.id} className="rounded-lg border border-border bg-card p-4 shadow-soft sm:p-5"><div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><NotebookPen className="h-5 w-5 text-brand"/><h2 className="font-display text-2xl font-semibold">{m.contact_name}</h2>{m.email_sent?<span className="rounded-full bg-sage px-2.5 py-1 text-[10px] font-semibold text-success">E-mail enviado</span>:<span className="rounded-full bg-sand px-2.5 py-1 text-[10px] font-semibold text-brand">Somente salvo</span>}</div><p className="mt-1 text-sm text-muted-foreground">{m.title||"Reunião"} · {new Intl.DateTimeFormat("pt-BR",{dateStyle:"medium",timeStyle:"short"}).format(new Date(m.meeting_at))}</p><p className="mt-3 line-clamp-3 whitespace-pre-wrap text-sm leading-relaxed">{m.content_preview||m.content}</p></div><div className="flex flex-wrap gap-2 md:justify-end"><Button variant="outline" className="h-9 px-3 text-xs" onClick={async()=>{const d=await atelierApi.meetings.detail(m.id);setEditing(d.data)}}>Abrir / editar</Button><Button variant="outline" className="h-9 px-3 text-xs" onClick={()=>void send(m.id)}><Send className="h-4 w-4"/>Reenviar e-mail</Button><Button variant="outline" className="h-9 px-3 text-xs" onClick={()=>window.open(atelierApi.meetings.pdfUrl(m.id),"_blank")}><Download className="h-4 w-4"/>PDF</Button><Button variant="outline" className="h-9 px-3 text-xs text-danger" onClick={()=>void remove(m.id)}><Trash2 className="h-4 w-4"/>Excluir</Button></div></div></article>)}
-      {!rows.length&&<div className="rounded-lg border border-border bg-card py-16 text-center text-sm text-muted-foreground">Nenhuma reunião registrada.</div>}
-    </div>
-    {(creating||editing)&&<MeetingModal meeting={editing} clients={clients} reportEmail={reportEmail} onClose={()=>{setCreating(false);setEditing(null)}} onSaved={afterSave}/>} 
+    <section className="mt-4 grid gap-3 rounded-lg border border-border bg-card p-4 shadow-soft lg:grid-cols-[auto_minmax(0,1fr)_minmax(260px,360px)_auto] lg:items-center lg:px-5">
+      <div className="grid h-11 w-11 place-items-center rounded-full bg-sand text-brand"><Mail className="h-5 w-5" /></div>
+      <div>
+        <h2 className="font-display text-2xl font-semibold">E-mail para receber os relatórios</h2>
+        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">O sistema envia automaticamente uma cópia de cada reunião para este endereço.</p>
+      </div>
+      <input value={reportEmail} onChange={(event)=>setReportEmail(event.target.value)} type="email" placeholder="priscila@email.com" className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
+      <Button variant="primary" className="h-11 px-5" onClick={()=>void saveEmail()}>Salvar e-mail</Button>
+    </section>
+
+    <section className="mt-4 overflow-hidden rounded-lg border border-border bg-card shadow-soft">
+      <div className="flex flex-col gap-3 border-b border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+        <h2 className="font-display text-3xl font-semibold">Histórico de reuniões</h2>
+        <Button variant="primary" className="h-11 self-start px-5 sm:self-auto" onClick={()=>setCreating(true)}><Plus className="h-4 w-4" />Nova reunião</Button>
+      </div>
+
+      <div className="divide-y divide-border">
+        {rows.map((meeting) => {
+          const date = new Date(meeting.meeting_at);
+          const dateLabel = new Intl.DateTimeFormat("pt-BR", { day:"2-digit", month:"long", year:"numeric" }).format(date);
+          const timeLabel = new Intl.DateTimeFormat("pt-BR", { hour:"2-digit", minute:"2-digit" }).format(date);
+          const preview = (meeting.content_preview || meeting.content || "Sem anotações registradas.").trim();
+          return <article key={meeting.id} className="grid gap-4 px-4 py-5 sm:px-5 lg:grid-cols-[minmax(250px,.9fr)_minmax(360px,1.35fr)_auto] lg:items-center">
+            <div className="flex min-w-0 gap-4">
+              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-avatar font-display text-2xl text-brand">{initials(meeting.contact_name).slice(0,1)}</div>
+              <div className="min-w-0">
+                <h3 className="truncate font-display text-2xl font-semibold">{meeting.contact_name}</h3>
+                <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5" />{dateLabel}</span>
+                  <span className="inline-flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" />{timeLabel}</span>
+                </div>
+                <p className="mt-2 text-[11px] font-medium text-brand">{meeting.email_sent ? "Relatório enviado por e-mail" : "Salvo no sistema"}</p>
+              </div>
+            </div>
+
+            <div className="min-w-0 border-border lg:border-l lg:pl-5">
+              <h3 className="font-display text-2xl font-semibold">{meeting.title || "Reunião"}</h3>
+              <p className="mt-1.5 line-clamp-3 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{preview}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap lg:w-[258px] lg:grid-cols-2">
+              <Button variant="primary" className="h-10 px-4 text-xs" onClick={async()=>{const detail=await atelierApi.meetings.detail(meeting.id);setEditing(detail.data)}}><FileText className="h-4 w-4" />Abrir</Button>
+              <Button variant="outline" className="h-10 px-4 text-xs" onClick={()=>window.open(atelierApi.meetings.pdfUrl(meeting.id),"_blank","noopener,noreferrer")}><Download className="h-4 w-4" />PDF</Button>
+              <Button variant="outline" className="h-10 px-3 text-xs" onClick={()=>void send(meeting.id)}><Send className="h-4 w-4" />Reenviar e-mail</Button>
+              <Button variant="outline" className="h-10 px-3 text-xs text-danger" onClick={()=>void remove(meeting.id)}><Trash2 className="h-4 w-4" />Excluir</Button>
+            </div>
+          </article>;
+        })}
+        {!rows.length && <div className="px-6 py-16 text-center text-sm text-muted-foreground">Nenhuma reunião registrada.</div>}
+      </div>
+    </section>
+
+    {(creating || editing) && <MeetingModal meeting={editing} reportEmail={reportEmail} onClose={()=>{setCreating(false);setEditing(null)}} onSaved={afterSave} />}
   </>;
 }
 
-function MeetingModal({meeting,clients,reportEmail,onClose,onSaved}:{meeting:Meeting|null;clients:Client[];reportEmail:string;onClose:()=>void;onSaved:(m:Meeting)=>Promise<void>}){
-  const local=(iso?:string)=>{const d=iso?new Date(iso):new Date();const pad=(n:number)=>String(n).padStart(2,"0");return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`};
-  const [clientId,setClientId]=useState(meeting?.client_id||"");
-  const [name,setName]=useState(meeting?.contact_name||"");
-  const [contactEmail,setContactEmail]=useState(meeting?.contact_email||"");
-  const [when,setWhen]=useState(local(meeting?.meeting_at));
-  const [title,setTitle]=useState(meeting?.title||"");
-  const [content,setContent]=useState(meeting?.content||"");
-  const [busy,setBusy]=useState(false);
-  const [error,setError]=useState("");
-  const chooseClient=(id:string)=>{setClientId(id);const c=clients.find(x=>x.id===id);if(c){setName(c.name);setContactEmail(c.email||"")}};
-  const submit=async(e:FormEvent)=>{e.preventDefault();setBusy(true);setError("");try{const body={client_id:clientId||null,contact_name:name,contact_email:contactEmail||null,meeting_at:new Date(when).toISOString(),title:title||null,content,email_to:reportEmail.trim()||null};const r=meeting?await atelierApi.meetings.update(meeting.id,body):await atelierApi.meetings.create(body);await onSaved(r.data);}catch(err){setError(apiErrorMessage(err));setBusy(false)}};
-  return <div className="meeting-modal-overlay" role="dialog" aria-modal="true" aria-label={meeting?"Editar reunião":"Nova reunião"}>
-    <form onSubmit={submit} className="meeting-modal">
-      <header className="meeting-modal-header">
-        <div><p>REUNIÃO</p><h2>{meeting?"Editar relatório":"Nova reunião"}</h2></div>
-        <button type="button" className="meeting-modal-close" onClick={onClose} aria-label="Fechar"><X /></button>
+function MeetingModal({ meeting, reportEmail, onClose, onSaved }: { meeting:Meeting|null; reportEmail:string; onClose:()=>void; onSaved:(meeting:Meeting)=>Promise<void> }) {
+  const local = (iso?:string) => {
+    const date = iso ? new Date(iso) : new Date();
+    const pad = (n:number) => String(n).padStart(2,"0");
+    return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  };
+  const [name,setName] = useState(meeting?.contact_name || "");
+  const [when,setWhen] = useState(local(meeting?.meeting_at));
+  const [title,setTitle] = useState(meeting?.title || "");
+  const [content,setContent] = useState(meeting?.content || "");
+  const [busy,setBusy] = useState(false);
+  const [error,setError] = useState("");
+
+  const submit = async (event:FormEvent) => {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      const body = {
+        client_id: meeting?.client_id || null,
+        contact_name: name.trim(),
+        contact_email: meeting?.contact_email || null,
+        meeting_at: new Date(when).toISOString(),
+        title: title.trim() || null,
+        content,
+        email_to: reportEmail.trim() || null,
+      };
+      const result = meeting ? await atelierApi.meetings.update(meeting.id, body) : await atelierApi.meetings.create(body);
+      await onSaved(result.data);
+    } catch (err) {
+      setError(apiErrorMessage(err));
+      setBusy(false);
+    }
+  };
+
+  return <div
+    role="dialog"
+    aria-modal="true"
+    aria-label={meeting ? "Editar reunião" : "Nova reunião"}
+    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-3 sm:p-5"
+    style={{ position:"fixed", inset:0, zIndex:100, background:"rgba(43,33,27,.48)" }}
+  >
+    <form
+      onSubmit={submit}
+      className="grid w-full overflow-hidden rounded-[18px] border border-border bg-card shadow-elevated"
+      style={{ maxWidth:900, maxHeight:"92dvh", gridTemplateRows:"auto minmax(0,1fr) auto" }}
+    >
+      <header className="flex items-start justify-between gap-4 border-b border-border bg-peach px-5 py-5 sm:px-7">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[.22em] text-brand">REUNIÃO</p>
+          <h2 className="mt-1 font-display text-4xl font-semibold leading-none">{meeting ? "Editar reunião" : "Nova reunião"}</h2>
+        </div>
+        <button type="button" onClick={onClose} aria-label="Fechar" className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-border bg-white/80 text-foreground shadow-soft hover:bg-white"><X className="h-5 w-5" /></button>
       </header>
 
-      <div className="meeting-modal-scroll">
-        <div className="meeting-fields">
-          <label className="meeting-span-2"><span>Cliente cadastrado (opcional)</span><select value={clientId} onChange={e=>chooseClient(e.target.value)}><option value="">Contato ainda não cadastrado</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
-          <ControlledField label="Cliente / contato" value={name} onChange={setName}/>
-          <ControlledField label="E-mail do contato (opcional)" type="email" value={contactEmail} onChange={setContactEmail}/>
-          <label><span>Data e hora</span><input type="datetime-local" value={when} onChange={e=>setWhen(e.target.value)} required /></label>
-          <ControlledField label="Assunto" value={title} onChange={setTitle}/>
+      <div className="min-h-0 overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">
+        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_240px]">
+          <label className="block"><span className="mb-1.5 block text-sm font-semibold">Cliente / contato</span><div className="relative"><User className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-brand"/><input value={name} onChange={(event)=>setName(event.target.value)} required placeholder="Digite o nome do cliente ou contato..." className="h-12 w-full rounded-md border border-input bg-background pl-10 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring" /></div></label>
+          <label className="block"><span className="mb-1.5 block text-sm font-semibold">Data e hora</span><input type="datetime-local" value={when} onChange={(event)=>setWhen(event.target.value)} required className="h-12 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring" /></label>
         </div>
 
-        <div className="meeting-notes-block">
-          <div className="meeting-notes-head"><div><span>Anotações da reunião</span><p>Use este espaço livremente durante a conversa. Decisões, preferências, medidas, valores, pendências e próximos passos.</p></div><small>{content.length.toLocaleString("pt-BR")} caracteres</small></div>
-          <textarea autoFocus={!meeting} value={content} onChange={e=>setContent(e.target.value)} required placeholder="Comece a escrever aqui..." />
+        <label className="mt-4 block"><span className="mb-1.5 block text-sm font-semibold">Assunto</span><div className="relative"><FileText className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-brand"/><input value={title} onChange={(event)=>setTitle(event.target.value)} placeholder="Ex.: Definição de decoração, alinhamento final, prova de mesa..." className="h-12 w-full rounded-md border border-input bg-background pl-10 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring" /></div></label>
+
+        <div className="mt-6">
+          <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2"><NotebookPen className="h-5 w-5 text-brand"/><span className="font-display text-xl font-semibold">Anotações da reunião</span></div>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Use este espaço livremente durante a conversa. Decisões, preferências, medidas, valores, pendências e próximos passos.</p>
+            </div>
+            <small className="text-[11px] text-muted-foreground">{content.length.toLocaleString("pt-BR")} caracteres</small>
+          </div>
+          <textarea autoFocus={!meeting} value={content} onChange={(event)=>setContent(event.target.value)} required placeholder="Escreva aqui suas anotações..." className="block w-full resize-y rounded-xl border border-input bg-background p-4 text-base leading-relaxed outline-none focus:ring-2 focus:ring-ring" style={{ minHeight:360 }} />
         </div>
 
-        <div className="meeting-send-note">
-          {reportEmail.trim()?<>Ao salvar, uma cópia será enviada automaticamente para <strong>{reportEmail}</strong>. O conteúdo permanece salvo mesmo se o envio falhar.</>:<>A reunião será salva normalmente. Para receber cópias automáticas por e-mail, configure o endereço na tela de Reuniões.</>}
+        <div className="mt-4 rounded-lg bg-sand/70 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
+          {reportEmail.trim() ? <>Ao salvar, uma cópia será enviada automaticamente para <strong className="text-foreground">{reportEmail}</strong>. O conteúdo permanece salvo mesmo se o envio falhar.</> : <>A reunião será salva normalmente. Para receber cópias automáticas por e-mail, configure o endereço na tela de Reuniões.</>}
         </div>
-        {error&&<div className="meeting-error">{error}</div>}
+        {error && <div className="mt-3 rounded-lg bg-blush px-4 py-3 text-sm text-danger">{error}</div>}
       </div>
 
-      <footer className="meeting-modal-footer">
-        <button type="button" className="meeting-cancel" onClick={onClose}>Cancelar</button>
-        <button type="submit" className="meeting-save" disabled={busy}>{busy?"Salvando...":"Salvar reunião"}</button>
+      <footer className="flex justify-end gap-2 border-t border-border bg-card/95 px-5 py-4 backdrop-blur-sm sm:px-7">
+        <Button type="button" variant="outline" className="h-11 px-5" onClick={onClose}>Cancelar</Button>
+        <Button type="submit" variant="primary" className="h-11 px-5" disabled={busy}>{busy ? "Salvando..." : "Salvar reunião"}</Button>
       </footer>
     </form>
   </div>;
