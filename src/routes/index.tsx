@@ -3155,7 +3155,7 @@ function Dashboard() {
   const logout = async () => { try { await atelierApi.auth.logout(); } finally { setUser(null); setBackend(EMPTY_BACKEND); } };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="apg-theme-black-gold min-h-screen bg-background text-foreground">
       <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} active={active} onSelect={navigate} role={user.role} />
       <div className="xl:pl-[264px]">
         <header className="sticky top-0 z-20 grid h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-surface/95 px-4 backdrop-blur-md sm:px-6 xl:px-7">

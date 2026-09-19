@@ -1,0 +1,209 @@
+/*
+ * Atelier Priscila Gefune — V8.11.1
+ * Runtime theme hardening.
+ *
+ * Motivo: a primeira V8.11 dependia principalmente da redefinição tardia
+ * dos tokens dentro de styles.css. No build publicado, o logo novo chegou,
+ * mas a camada de cores permaneceu clara.
+ *
+ * Esta folha é importada separadamente e por último, usa seletores explícitos
+ * sobre as mesmas utilities do frontend real e fica escopada no shell autenticado.
+ */
+
+html,
+body {
+  background: #0d0c0a;
+}
+
+.apg-theme-black-gold {
+  --background: #0d0c0a;
+  --foreground: #eee6da;
+  --card: #15130f;
+  --card-foreground: #eee6da;
+  --popover: #171410;
+  --popover-foreground: #eee6da;
+  --primary: #d4b06a;
+  --primary-foreground: #17110a;
+  --secondary: #201c16;
+  --secondary-foreground: #eee6da;
+  --muted: #201c16;
+  --muted-foreground: #aaa094;
+  --accent: #2a2115;
+  --accent-foreground: #edcf8e;
+  --destructive: #df7d72;
+  --destructive-foreground: #fff5ee;
+  --border: #3a3024;
+  --input: #493b2b;
+  --ring: #d4b06a;
+  --sidebar: #0a0908;
+  --sidebar-foreground: #d7cfc4;
+  --sidebar-primary: #d4b06a;
+  --sidebar-primary-foreground: #17110a;
+  --sidebar-accent: #2a2117;
+  --sidebar-accent-foreground: #f5ead7;
+  --sidebar-border: #33291e;
+  --sidebar-ring: #d4b06a;
+  --brand: #d4b06a;
+  --success: #93c39c;
+  --danger: #df7d72;
+  --sage: #17271d;
+  --sand: #2a2115;
+  --blush: #311b19;
+  --blush-strong: #8b4038;
+  --peach: #241a10;
+  --surface: #12100d;
+  --avatar: #ead5af;
+  --overlay: rgba(0,0,0,.72);
+  --shadow-soft: 0 8px 24px rgba(0,0,0,.28);
+  --shadow-elevated: 0 18px 50px rgba(0,0,0,.48);
+  --shadow-button: 0 6px 16px rgba(185,137,66,.24);
+  --hero-wash: linear-gradient(90deg,rgba(13,12,10,.98) 0%,rgba(13,12,10,.93) 47%,rgba(13,12,10,.42) 72%,rgba(13,12,10,.16) 100%);
+  min-height: 100vh;
+  background: var(--background) !important;
+  color: var(--foreground) !important;
+  color-scheme: dark;
+}
+
+/* Explicit utility overrides.
+ * They intentionally do not depend on Tailwind resolving @theme during build.
+ */
+.apg-theme-black-gold .bg-background { background-color: #0d0c0a !important; }
+.apg-theme-black-gold .bg-card { background-color: #15130f !important; }
+.apg-theme-black-gold .bg-card\/95 { background-color: rgba(21,19,15,.95) !important; }
+.apg-theme-black-gold .bg-surface { background-color: #12100d !important; }
+.apg-theme-black-gold .bg-surface\/95 { background-color: rgba(18,16,13,.95) !important; }
+.apg-theme-black-gold .bg-sidebar { background-color: #0a0908 !important; }
+.apg-theme-black-gold .bg-popover { background-color: #171410 !important; }
+.apg-theme-black-gold .bg-muted { background-color: #201c16 !important; }
+.apg-theme-black-gold .bg-muted\/25 { background-color: rgba(32,28,22,.25) !important; }
+.apg-theme-black-gold .bg-muted\/35 { background-color: rgba(32,28,22,.35) !important; }
+.apg-theme-black-gold .bg-muted\/45 { background-color: rgba(32,28,22,.45) !important; }
+.apg-theme-black-gold .bg-secondary { background-color: #201c16 !important; }
+.apg-theme-black-gold .bg-peach { background-color: #241a10 !important; }
+.apg-theme-black-gold .bg-sand { background-color: #2a2115 !important; }
+.apg-theme-black-gold .bg-sand\/70 { background-color: rgba(42,33,21,.70) !important; }
+.apg-theme-black-gold .bg-sage { background-color: #17271d !important; }
+.apg-theme-black-gold .bg-blush { background-color: #311b19 !important; }
+.apg-theme-black-gold .bg-avatar { background-color: #ead5af !important; }
+.apg-theme-black-gold .bg-overlay { background-color: rgba(0,0,0,.72) !important; }
+.apg-theme-black-gold .bg-border { background-color: #3a3024 !important; }
+.apg-theme-black-gold .bg-foreground { background-color: #eee6da !important; }
+.apg-theme-black-gold .bg-danger { background-color: #df7d72 !important; }
+.apg-theme-black-gold .bg-primary {
+  background: linear-gradient(180deg,#e2bf7a,#b88942) !important;
+  color: #17110a !important;
+  border-color: #c29d58 !important;
+}
+.apg-theme-black-gold .bg-primary\/20 { background-color: rgba(212,176,106,.20) !important; }
+
+.apg-theme-black-gold .text-foreground { color: #eee6da !important; }
+.apg-theme-black-gold .text-muted-foreground { color: #aaa094 !important; }
+.apg-theme-black-gold .text-card-foreground { color: #eee6da !important; }
+.apg-theme-black-gold .text-popover-foreground { color: #eee6da !important; }
+.apg-theme-black-gold .text-sidebar-foreground { color: #d7cfc4 !important; }
+.apg-theme-black-gold .text-brand,
+.apg-theme-black-gold .text-brand\/80,
+.apg-theme-black-gold .text-primary { color: #d4b06a !important; }
+.apg-theme-black-gold .text-primary-foreground { color: #17110a !important; }
+.apg-theme-black-gold .text-success { color: #93c39c !important; }
+.apg-theme-black-gold .text-danger { color: #df7d72 !important; }
+
+.apg-theme-black-gold .border-border { border-color: #3a3024 !important; }
+.apg-theme-black-gold .border-input { border-color: #493b2b !important; }
+.apg-theme-black-gold .border-brand\/15 { border-color: rgba(212,176,106,.15) !important; }
+.apg-theme-black-gold .border-danger\/20 { border-color: rgba(223,125,114,.20) !important; }
+.apg-theme-black-gold .border-danger\/30 { border-color: rgba(223,125,114,.30) !important; }
+.apg-theme-black-gold .border-primary\/50 { border-color: rgba(212,176,106,.50) !important; }
+
+.apg-theme-black-gold .ring-offset-background { --tw-ring-offset-color: #0d0c0a !important; }
+.apg-theme-black-gold .focus\:ring-ring:focus,
+.apg-theme-black-gold .focus-visible\:ring-ring:focus-visible { --tw-ring-color: #d4b06a !important; }
+
+.apg-theme-black-gold .bg-hero-wash { background: var(--hero-wash) !important; }
+
+.apg-theme-black-gold .hover\:bg-muted:hover { background-color: #201c16 !important; }
+.apg-theme-black-gold .hover\:bg-muted\/45:hover { background-color: rgba(32,28,22,.45) !important; }
+.apg-theme-black-gold .hover\:bg-accent:hover { background-color: #2a2115 !important; }
+.apg-theme-black-gold .hover\:bg-blush:hover { background-color: #311b19 !important; }
+.apg-theme-black-gold .hover\:bg-primary\/90:hover {
+  background: linear-gradient(180deg,#edcf8e,#c49349) !important;
+}
+.apg-theme-black-gold .hover\:text-brand:hover { color: #edcf8e !important; }
+
+/* Inputs, selects and textareas need an explicit dark surface in production. */
+.apg-theme-black-gold input,
+.apg-theme-black-gold select,
+.apg-theme-black-gold textarea {
+  color: #eee6da;
+}
+.apg-theme-black-gold input::placeholder,
+.apg-theme-black-gold textarea::placeholder {
+  color: #8f8477;
+}
+.apg-theme-black-gold select option {
+  background: #15130f;
+  color: #eee6da;
+}
+
+/* Header/sidebar and cards: extra specificity for the exact V8.10/V8.11 shell. */
+.apg-theme-black-gold header {
+  background-color: rgba(18,16,13,.95) !important;
+  border-color: #3a3024 !important;
+}
+.apg-theme-black-gold aside {
+  background-color: #0a0908 !important;
+  border-color: #33291e !important;
+}
+.apg-theme-black-gold aside img {
+  border-radius: 6px;
+}
+.apg-theme-black-gold article,
+.apg-theme-black-gold section,
+.apg-theme-black-gold [role="dialog"] {
+  border-color: #3a3024;
+}
+
+/* Meeting module still contains old structural CSS outside Tailwind utilities. */
+.apg-theme-black-gold .meeting-email-config,
+.apg-theme-black-gold .meeting-modal {
+  background: #15130f !important;
+  border-color: #3a3024 !important;
+  color: #eee6da !important;
+}
+.apg-theme-black-gold .meeting-modal-overlay { background: rgba(0,0,0,.72) !important; }
+.apg-theme-black-gold .meeting-modal-header {
+  background: #241a10 !important;
+  border-color: #3a3024 !important;
+}
+.apg-theme-black-gold .meeting-modal-footer {
+  background: rgba(21,19,15,.96) !important;
+  border-color: #3a3024 !important;
+}
+.apg-theme-black-gold .meeting-modal-close,
+.apg-theme-black-gold .meeting-cancel {
+  background: #15130f !important;
+  color: #eee6da !important;
+  border-color: #493b2b !important;
+}
+.apg-theme-black-gold .meeting-fields input,
+.apg-theme-black-gold .meeting-fields select,
+.apg-theme-black-gold .meeting-notes-block textarea,
+.apg-theme-black-gold .meeting-email-config input {
+  background: #0d0c0a !important;
+  color: #eee6da !important;
+  border-color: #493b2b !important;
+}
+.apg-theme-black-gold .meeting-send-note {
+  background: #2a2115 !important;
+  color: #aaa094 !important;
+}
+.apg-theme-black-gold .meeting-save {
+  background: linear-gradient(180deg,#e2bf7a,#b88942) !important;
+  border-color: #c29d58 !important;
+  color: #17110a !important;
+}
+
+/* Dark scrollbar for Chromium/Edge. */
+.apg-theme-black-gold * {
+  scrollbar-color: #6a5436 #0d0c0a;
+}
