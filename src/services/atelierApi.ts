@@ -338,7 +338,7 @@ export type ProposalDetail = {
 };
 
 
-export type AuthUser = { id: string; name: string; username: string; email: string | null };
+export type AuthUser = { id: string; name: string; username: string; email: string | null; role: "admin" | "inventory" };
 
 export type Meeting = {
   id: string;

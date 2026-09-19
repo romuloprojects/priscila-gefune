@@ -169,11 +169,13 @@ function Sidebar({
   onClose,
   active,
   onSelect,
+  role,
 }: {
   open: boolean;
   onClose: () => void;
   active: Page;
   onSelect: (label: Page) => void;
+  role: AuthUser["role"];
 }) {
   return (
     <>
@@ -199,7 +201,7 @@ function Sidebar({
           </Button>
         </div>
         <nav aria-label="Navegação principal" className="mt-10 space-y-1.5">
-          {navigation.map(({ label, icon: Icon }) => (
+          {navigation.filter(({ label }) => role === "admin" || label === "Estoque").map(({ label, icon: Icon }) => (
             <Button
               key={label}
               className={`h-11 w-full justify-start px-4 text-sm ${active === label ? "bg-sidebar-accent text-sidebar-primary shadow-soft" : "text-sidebar-foreground"}`}
@@ -781,12 +783,14 @@ function InventoryPage({
   availability,
   openModal,
   onEdit,
+  role,
 }: {
   query: string;
   inventory: InventoryItem[];
   availability: AvailabilityItem[];
   openModal: (kind: ModalKind) => void;
   onEdit: (item: InventoryItem) => void;
+  role: AuthUser["role"];
 }) {
   const [category, setCategory] = useState("Todos");
   const categories = useMemo(
@@ -810,7 +814,7 @@ function InventoryPage({
       <PageHeader
         eyebrow="Acervo"
         title="Estoque"
-        description="Acompanhe quantidades, valores e disponibilidade dos itens do acervo."
+        description={role === "inventory" ? "Acompanhe quantidades e disponibilidade dos itens do acervo." : "Acompanhe quantidades, valores e disponibilidade dos itens do acervo."}
         action="Adicionar item"
         onAction={() => openModal("inventory")}
       />
@@ -852,10 +856,12 @@ function InventoryPage({
                 <div><p className="text-[10px] uppercase tracking-wide text-muted-foreground">Disponível</p><strong className="text-success">{available}</strong></div>
               </div>
               <div className="mt-4 flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Valor padrão</p>
-                  <strong className="font-display text-xl">{formatCurrency(item.default_unit_price)}</strong>
-                </div>
+                {role === "admin" ? (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Valor padrão</p>
+                    <strong className="font-display text-xl">{formatCurrency(item.default_unit_price)}</strong>
+                  </div>
+                ) : <span className="text-xs text-muted-foreground">Controle físico do acervo</span>}
                 <Button variant="outline" className="h-9 px-4 text-xs" onClick={() => onEdit(item)}>
                   Editar item
                 </Button>
@@ -1773,6 +1779,7 @@ function EntityModal({
   onClose,
   onSaved,
   announce,
+  role,
 }: {
   state: Exclude<ModalState, null>;
   clients: Client[];
@@ -1781,6 +1788,7 @@ function EntityModal({
   onClose: () => void;
   onSaved: () => Promise<void>;
   announce: (message: string) => void;
+  role: AuthUser["role"];
 }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -1824,7 +1832,7 @@ function EntityModal({
           unit: value("unit") || "un",
           total_quantity: Number(value("total_quantity") || 0),
           maintenance_quantity: Number(value("maintenance_quantity") || 0),
-          default_unit_price: Number(value("default_unit_price") || 0),
+          ...(role === "admin" ? { default_unit_price: Number(value("default_unit_price") || 0) } : {}),
           description: value("description"),
         };
         if (editingInventory) {
@@ -1912,10 +1920,10 @@ function EntityModal({
               <Field label="Categoria" name="category_name" defaultValue={editingInventory?.category_name} placeholder="Ex.: Louças" />
               <Field label="Quantidade total" name="total_quantity" type="number" min="0" required defaultValue={editingInventory?.total_quantity ?? 0} />
               <Field label="Em manutenção" name="maintenance_quantity" type="number" min="0" defaultValue={editingInventory?.maintenance_quantity ?? 0} />
-              <Field label="Valor padrão" name="default_unit_price" type="number" min="0" step="0.01" defaultValue={Number(editingInventory?.default_unit_price ?? 0)} />
+              {role === "admin" && <Field label="Valor padrão" name="default_unit_price" type="number" min="0" step="0.01" defaultValue={Number(editingInventory?.default_unit_price ?? 0)} />}
               <Field label="Unidade" name="unit" defaultValue={editingInventory?.unit ?? "un"} />
               <div className="sm:col-span-2"><Field label="Descrição" name="description" defaultValue={editingInventory?.description} /></div>
-              <div className="sm:col-span-2 rounded-lg bg-sage px-4 py-3 text-xs text-success"><Check className="mr-2 inline h-4 w-4" />Valor e quantidade atualizados passam a ser usados nos próximos cálculos.</div>
+              <div className="sm:col-span-2 rounded-lg bg-sage px-4 py-3 text-xs text-success"><Check className="mr-2 inline h-4 w-4" />{role === "admin" ? "Valor e quantidade atualizados passam a ser usados nos próximos cálculos." : "Quantidade e dados do item atualizados com sucesso."}</div>
             </>
           )}
 
@@ -3012,9 +3020,29 @@ function Dashboard() {
     window.setTimeout(() => setNotice(""), 3200);
   }, []);
 
-  const refresh = useCallback(async () => {
+  const refreshForRole = useCallback(async (role: AuthUser["role"]) => {
     setLoading(true);
     const date = todayIso();
+
+    if (role === "inventory") {
+      const results = await Promise.allSettled([
+        atelierApi.inventory.list(),
+        atelierApi.inventory.availability(date, date),
+      ]);
+      const nextIssues: string[] = [];
+      if (results[0].status === "rejected") nextIssues.push(`Estoque: ${apiErrorMessage(results[0].reason)}`);
+      if (results[1].status === "rejected") nextIssues.push(`Disponibilidade: ${apiErrorMessage(results[1].reason)}`);
+      setBackend((previous) => ({
+        ...EMPTY_BACKEND,
+        inventory: results[0].status === "fulfilled" ? results[0].value.data : previous.inventory,
+        availability: results[1].status === "fulfilled" ? results[1].value.data : previous.availability,
+        healthy: true,
+      }));
+      setIssues(nextIssues);
+      setLoading(false);
+      return;
+    }
+
     const results = await Promise.allSettled([
       atelierApi.health(),
       atelierApi.dashboard(),
@@ -3035,17 +3063,8 @@ function Dashboard() {
       if (result.status === "rejected") nextIssues.push(`${label}: ${apiErrorMessage(result.reason)}`);
     };
     [
-      "Conexão",
-      "Resumo",
-      "Clientes",
-      "Eventos",
-      "Estoque",
-      "Disponibilidade",
-      "Propostas",
-      "Pacotes",
-      "Serviços",
-      "Reuniões",
-      "Preferências",
+      "Conexão","Resumo","Clientes","Eventos","Estoque","Disponibilidade",
+      "Propostas","Pacotes","Serviços","Reuniões","Preferências",
     ].forEach((label, index) => fail(index, label));
 
     setBackend((previous) => ({
@@ -3065,11 +3084,25 @@ function Dashboard() {
     setLoading(false);
   }, []);
 
+  const refresh = useCallback(async () => {
+    await refreshForRole(user?.role ?? "admin");
+  }, [refreshForRole, user?.role]);
+
   useEffect(() => {
     let alive = true;
-    atelierApi.auth.session().then((r) => { if (!alive) return; setUser(r.user); setAuthChecking(false); void refresh(); }).catch(() => { if (!alive) return; setUser(null); setAuthChecking(false); });
+    atelierApi.auth.session().then((r) => {
+      if (!alive) return;
+      setUser(r.user);
+      if (r.user.role === "inventory") setActive("Estoque");
+      setAuthChecking(false);
+      void refreshForRole(r.user.role);
+    }).catch(() => {
+      if (!alive) return;
+      setUser(null);
+      setAuthChecking(false);
+    });
     return () => { alive = false; };
-  }, [refresh]);
+  }, [refreshForRole]);
 
   const navigate = (page: Page) => {
     setActive(page);
@@ -3113,13 +3146,17 @@ function Dashboard() {
   const alertCount = backend.dashboard?.alerts?.length ?? 0;
 
   if (authChecking) return <div className="grid min-h-screen place-items-center bg-background"><div className="flex items-center gap-2 text-sm text-muted-foreground"><RefreshCw className="h-4 w-4 animate-spin"/>Carregando...</div></div>;
-  if (!user) return <LoginPage onLoggedIn={(u) => { setUser(u); void refresh(); }} />;
+  if (!user) return <LoginPage onLoggedIn={(u) => {
+    setUser(u);
+    if (u.role === "inventory") setActive("Estoque");
+    void refreshForRole(u.role);
+  }} />;
 
   const logout = async () => { try { await atelierApi.auth.logout(); } finally { setUser(null); setBackend(EMPTY_BACKEND); } };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} active={active} onSelect={navigate} />
+      <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} active={active} onSelect={navigate} role={user.role} />
       <div className="xl:pl-[264px]">
         <header className="sticky top-0 z-20 grid h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-surface/95 px-4 backdrop-blur-md sm:px-6 xl:px-7">
           <Button variant="icon" className="h-10 w-10 xl:hidden" onClick={() => setMenuOpen(true)} aria-label="Abrir menu"><Menu className="h-5 w-5" /></Button>
@@ -3135,9 +3172,9 @@ function Dashboard() {
           </label>
           <div className="flex shrink-0 items-center gap-1 sm:gap-3">
             <Button variant="icon" className="h-10 w-10" aria-label="Atualizar dados" onClick={() => void refresh()} disabled={loading}><RefreshCw className={`h-5 w-5 ${loading ? "animate-spin" : ""}`} /></Button>
-            <Button variant="primary" className="h-10 px-3 sm:px-5" onClick={() => openModal("event")}><Plus className="h-4 w-4" /><span className="hidden sm:inline">Novo evento</span></Button>
-            <Button variant="icon" className="relative h-10 w-10" aria-label="Notificações" onClick={() => announce(alertCount ? `Você tem ${alertCount} alerta(s)` : "Sem alertas pendentes")}><Bell className="h-5 w-5" />{alertCount > 0 && <span className="absolute right-2 top-1.5 h-2 w-2 rounded-full bg-danger" />}</Button><Button variant="icon" className="h-10 w-10 xl:hidden" aria-label="Sair" onClick={() => void logout()}><LogOut className="h-5 w-5" /></Button>
-            <Button className="mobile-profile h-11 px-2" onClick={() => void logout()} title="Sair"><span className="grid h-8 w-8 place-items-center rounded-full bg-avatar font-display text-sm font-semibold text-primary">PG</span><span>Olá, {user.name}</span><LogOut className="h-4 w-4" /></Button>
+            {user.role === "admin" && <Button variant="primary" className="h-10 px-3 sm:px-5" onClick={() => openModal("event")}><Plus className="h-4 w-4" /><span className="hidden sm:inline">Novo evento</span></Button>}
+            {user.role === "admin" && <Button variant="icon" className="relative h-10 w-10" aria-label="Notificações" onClick={() => announce(alertCount ? `Você tem ${alertCount} alerta(s)` : "Sem alertas pendentes")}><Bell className="h-5 w-5" />{alertCount > 0 && <span className="absolute right-2 top-1.5 h-2 w-2 rounded-full bg-danger" />}</Button>}<Button variant="icon" className="h-10 w-10 xl:hidden" aria-label="Sair" onClick={() => void logout()}><LogOut className="h-5 w-5" /></Button>
+            <Button className="mobile-profile h-11 px-2" onClick={() => void logout()} title="Sair"><span className="grid h-8 w-8 place-items-center rounded-full bg-avatar font-display text-sm font-semibold text-primary">{initials(user.name)}</span><span>Olá, {user.name}</span><LogOut className="h-4 w-4" /></Button>
           </div>
         </header>
 
@@ -3153,11 +3190,11 @@ function Dashboard() {
             </div>
           )}
 
-          {active !== "Início" && (
+          {user.role === "admin" && active !== "Início" && (
             <Button className="mb-4 h-8 px-0 text-xs text-muted-foreground hover:bg-transparent hover:text-brand" onClick={() => navigate("Início")}><ArrowLeft className="h-4 w-4" />Voltar ao início</Button>
           )}
 
-          {active === "Início" && (
+          {user.role === "admin" && active === "Início" && (
             <HomePage
               query={query}
               navigate={navigate}
@@ -3170,7 +3207,7 @@ function Dashboard() {
               onNewMeeting={openNewMeeting}
             />
           )}
-          {active === "Eventos" && <EventsPage query={query} events={backend.events} openModal={openModal} announce={announce} onReserve={setReservationEvent} onDetail={setEventDetailId} />}
+          {user.role === "admin" && active === "Eventos" && <EventsPage query={query} events={backend.events} openModal={openModal} announce={announce} onReserve={setReservationEvent} onDetail={setEventDetailId} />}
           {active === "Estoque" && (
             <InventoryPage
               query={query}
@@ -3178,17 +3215,18 @@ function Dashboard() {
               availability={backend.availability}
               openModal={openModal}
               onEdit={(item) => setModal({ kind: "inventory", inventoryItem: item })}
+              role={user.role}
             />
           )}
-          {active === "Propostas" && (
+          {user.role === "admin" && active === "Propostas" && (
             <ProposalsPage query={query} proposals={backend.proposals} openModal={openModal} onPreview={previewProposal} onPdf={openPdf} onEdit={setProposalEditorId} onDelete={(id) => void deleteProposal(id)} />
           )}
-          {active === "Clientes" && <ClientsPage query={query} clients={backend.clients} events={backend.events} openModal={openModal} announce={announce} />}
-          {active === "Reuniões" && <MeetingsPage query={query} meetings={backend.meetings} clients={backend.clients} settings={backend.settings} refresh={refresh} announce={announce} openCreateToken={meetingCreateToken} />}
+          {user.role === "admin" && active === "Clientes" && <ClientsPage query={query} clients={backend.clients} events={backend.events} openModal={openModal} announce={announce} />}
+          {user.role === "admin" && active === "Reuniões" && <MeetingsPage query={query} meetings={backend.meetings} clients={backend.clients} settings={backend.settings} refresh={refresh} announce={announce} openCreateToken={meetingCreateToken} />}
         </main>
       </div>
 
-      {modal?.kind === "proposal" && (
+      {user.role === "admin" && modal?.kind === "proposal" && (
         <ProposalCreateModal
           clients={backend.clients}
           events={backend.events}
@@ -3200,9 +3238,10 @@ function Dashboard() {
           onSaved={refresh}
           onCreated={setProposalEditorId}
           announce={announce}
+          role={user.role}
         />
       )}
-      {modal && modal.kind !== "proposal" && (
+      {modal && modal.kind !== "proposal" && (user.role === "admin" || modal.kind === "inventory") && (
         <EntityModal
           state={modal}
           clients={backend.clients}
@@ -3211,9 +3250,10 @@ function Dashboard() {
           onClose={() => setModal(null)}
           onSaved={refresh}
           announce={announce}
+          role={user.role}
         />
       )}
-      {eventDetailId && (
+      {user.role === "admin" && eventDetailId && (
         <EventDetailModal
           eventId={eventDetailId}
           clients={backend.clients}
@@ -3222,7 +3262,7 @@ function Dashboard() {
           announce={announce}
         />
       )}
-      {reservationEvent && (
+      {user.role === "admin" && reservationEvent && (
         <ReservationModal
           event={reservationEvent}
           inventory={backend.inventory}
@@ -3231,7 +3271,7 @@ function Dashboard() {
           announce={announce}
         />
       )}
-      {proposalEditorId && (
+      {user.role === "admin" && proposalEditorId && (
         <ProposalEditor
           proposalId={proposalEditorId}
           onClose={() => setProposalEditorId(null)}

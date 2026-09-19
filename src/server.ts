@@ -55,14 +55,59 @@ async function callN8n(path: string, request: Request, token?: string): Promise<
   return fetch(target, { method, headers, body: hasBody ? body : undefined, redirect: "manual", cache: "no-store" });
 }
 
-async function validateSession(request: Request, token: string): Promise<boolean> {
+type SessionPayload = {
+  ok?: boolean;
+  authenticated?: boolean;
+  user?: { id?: string; name?: string; username?: string; role?: "admin" | "inventory" };
+  expires_at?: string;
+};
+
+async function getSession(request: Request, token: string): Promise<SessionPayload | null> {
   const probe = new Request(new URL("/api/atelier/auth/session", request.url), { method: "GET", headers: { accept: "application/json" } });
   try {
     const response = await callN8n("/auth/session", probe, token);
-    if (!response.ok) return false;
-    const payload = await response.json() as { ok?: boolean; authenticated?: boolean };
-    return payload.ok === true && payload.authenticated === true;
-  } catch { return false; }
+    if (!response.ok) return null;
+    const payload = await response.json() as SessionPayload;
+    return payload.ok === true && payload.authenticated === true ? payload : null;
+  } catch { return null; }
+}
+
+const INVENTORY_ROLE_PATHS = new Set([
+  "/auth/session",
+  "/auth/logout",
+  "/inventory",
+  "/inventory-update",
+  "/inventory/availability",
+  "/inventory-movements",
+]);
+
+function isAllowedForRole(role: string | undefined, suffix: string) {
+  if (role !== "inventory") return true;
+  return INVENTORY_ROLE_PATHS.has(suffix);
+}
+
+async function sanitizeInventoryRequest(request: Request, suffix: string, role: string | undefined) {
+  if (role !== "inventory" || !["/inventory", "/inventory-update"].includes(suffix) || request.method.toUpperCase() === "GET") return request;
+  const body = await request.clone().json().catch(() => ({})) as Record<string, unknown>;
+  delete body.default_unit_price;
+  return new Request(request.url, {
+    method: request.method,
+    headers: request.headers,
+    body: JSON.stringify(body),
+  });
+}
+
+function stripCommercialInventoryFields(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(stripCommercialInventoryFields);
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+      if (key === "default_unit_price") continue;
+      out[key] = stripCommercialInventoryFields(child);
+    }
+    return out;
+  }
+  return value;
 }
 
 async function proxyAtelierApi(request: Request): Promise<Response | null> {
@@ -79,8 +124,15 @@ async function proxyAtelierApi(request: Request): Promise<Response | null> {
     return Response.json({ ok: false, code: "AUTH_REQUIRED", message: "Faça login para continuar." }, { status: 401, headers: { "cache-control": "no-store" } });
   }
 
-  if (!publicAuth && suffix !== "/auth/session" && !(await validateSession(request, token))) {
-    return Response.json({ ok: false, code: "SESSION_EXPIRED", message: "Sua sessão expirou. Entre novamente." }, { status: 401, headers: { "cache-control": "no-store", "set-cookie": `${SESSION_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0` } });
+  let session: SessionPayload | null = null;
+  if (!publicAuth && suffix !== "/auth/session") {
+    session = await getSession(request, token);
+    if (!session) {
+      return Response.json({ ok: false, code: "SESSION_EXPIRED", message: "Sua sessão expirou. Entre novamente." }, { status: 401, headers: { "cache-control": "no-store", "set-cookie": `${SESSION_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0` } });
+    }
+    if (!isAllowedForRole(session.user?.role, suffix)) {
+      return Response.json({ ok: false, code: "FORBIDDEN", message: "Seu usuário não possui acesso a esta área." }, { status: 403, headers: { "cache-control": "no-store" } });
+    }
   }
 
   try {
@@ -108,7 +160,23 @@ async function proxyAtelierApi(request: Request): Promise<Response | null> {
       return new Response(body || JSON.stringify({ ok: true }), { status: 200, headers: { "content-type": "application/json", "cache-control": "no-store", "set-cookie": `${SESSION_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0` } });
     }
 
-    const upstream = await callN8n(suffix, request, token);
+    const role = session?.user?.role;
+    const outboundRequest = await sanitizeInventoryRequest(request, suffix, role);
+    const upstream = await callN8n(suffix, outboundRequest, token);
+
+    if (role === "inventory" && ["/inventory", "/inventory-update", "/inventory/availability", "/inventory-movements"].includes(suffix)) {
+      const contentType = upstream.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        const payload = await upstream.json().catch(() => null);
+        if (payload !== null) {
+          return Response.json(stripCommercialInventoryFields(payload), {
+            status: upstream.status,
+            headers: { "cache-control": "no-store" },
+          });
+        }
+      }
+    }
+
     const responseHeaders = new Headers();
     const upstreamContentType = upstream.headers.get("content-type");
     const upstreamDisposition = upstream.headers.get("content-disposition");
