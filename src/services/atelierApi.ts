@@ -115,6 +115,7 @@ export type Client = {
   email: string | null;
   instagram: string | null;
   notes: string | null;
+  photo_url: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -411,6 +412,10 @@ export const atelierApi = {
       requestJson<{ ok: true; data: Client }>("/client-update", {
         method: "PATCH",
         body: JSON.stringify({ ...body, id }),
+      }),
+    delete: (id: string) =>
+      requestJson<{ ok: true; deleted_id: string; events: number; proposals: number }>(`/client-delete${qs({ id })}`, {
+        method: "DELETE",
       }),
   },
 

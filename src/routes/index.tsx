@@ -7,6 +7,7 @@ import {
   Bell,
   Box,
   CalendarDays,
+  Camera,
   Check,
   ChevronDown,
   ClipboardList,
@@ -26,6 +27,7 @@ import {
   Menu,
   Package,
   PackageCheck,
+  Pencil,
   Phone,
   Plus,
   RefreshCw,
@@ -92,7 +94,7 @@ export const Route = createFileRoute("/")({
 
 type Page = "Início" | "Eventos" | "Estoque" | "Propostas" | "Clientes" | "Reuniões";
 type ModalKind = "event" | "inventory" | "proposal" | "client";
-type ModalState = { kind: ModalKind; inventoryItem?: InventoryItem } | null;
+type ModalState = { kind: ModalKind; inventoryItem?: InventoryItem; client?: Client } | null;
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   children: ReactNode;
   variant?: "primary" | "quiet" | "icon" | "outline";
@@ -140,6 +142,143 @@ function Button({ children, className = "", variant = "quiet", ...props }: Butto
     >
       {children}
     </button>
+  );
+}
+
+
+const PHOTO_INPUT_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const PHOTO_MAX_SOURCE_BYTES = 8 * 1024 * 1024;
+const PHOTO_MAX_DATA_URL_LENGTH = 450_000;
+
+async function optimizePhoto(file: File): Promise<string> {
+  if (!PHOTO_INPUT_TYPES.has(file.type)) {
+    throw new Error("Use uma imagem JPG, PNG ou WEBP.");
+  }
+  if (file.size > PHOTO_MAX_SOURCE_BYTES) {
+    throw new Error("A foto original deve ter no máximo 8 MB.");
+  }
+
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const element = new window.Image();
+      element.onload = () => resolve(element);
+      element.onerror = () => reject(new Error("Não foi possível abrir esta imagem."));
+      element.src = objectUrl;
+    });
+
+    const maxSide = 640;
+    const scale = Math.min(1, maxSide / Math.max(image.naturalWidth || 1, image.naturalHeight || 1));
+    const width = Math.max(1, Math.round(image.naturalWidth * scale));
+    const height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("Seu navegador não conseguiu processar a foto.");
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, width, height);
+    context.drawImage(image, 0, 0, width, height);
+
+    let quality = 0.82;
+    let dataUrl = canvas.toDataURL("image/jpeg", quality);
+    while (dataUrl.length > PHOTO_MAX_DATA_URL_LENGTH && quality > 0.5) {
+      quality -= 0.08;
+      dataUrl = canvas.toDataURL("image/jpeg", quality);
+    }
+    if (dataUrl.length > PHOTO_MAX_DATA_URL_LENGTH) {
+      throw new Error("A foto ainda ficou muito grande. Escolha uma imagem menor.");
+    }
+    return dataUrl;
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+function PhotoUploadField({
+  label,
+  value,
+  onChange,
+  fallback,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  fallback: ReactNode;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  const selectPhoto = async (file?: File) => {
+    if (!file) return;
+    setBusy(true);
+    setError("");
+    try {
+      onChange(await optimizePhoto(file));
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Não foi possível processar a foto.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="sm:col-span-2 rounded-lg border border-border bg-muted/25 p-3">
+      <p className="text-xs font-semibold text-muted-foreground">{label}</p>
+      <div className="mt-2 flex items-center gap-3">
+        <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-lg border border-border bg-background text-brand">
+          {value ? <img src={value} alt="Prévia da foto" className="h-full w-full object-cover" /> : fallback}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap gap-2">
+            <label className="inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-md border border-input bg-card px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted">
+              <Camera className="h-4 w-4 text-brand" />
+              {busy ? "Processando..." : value ? "Trocar foto" : "Selecionar foto"}
+              <input
+                className="hidden"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                disabled={busy}
+                onChange={(event) => void selectPhoto(event.target.files?.[0])}
+              />
+            </label>
+            {value && (
+              <Button type="button" variant="outline" className="h-9 px-3 text-xs text-danger" onClick={() => onChange("")}>
+                Remover foto
+              </Button>
+            )}
+          </div>
+          <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">JPG, PNG ou WEBP. A foto é reduzida e otimizada automaticamente antes de ser salva.</p>
+          {error && <p className="mt-1 text-[10px] text-danger">{error}</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PhotoLightbox({ photo, onClose }: { photo: { src: string; title: string }; onClose: () => void }) {
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[95] flex items-center justify-center bg-overlay p-4 sm:p-8"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Foto ampliada de ${photo.title}`}
+      onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}
+    >
+      <div className="relative max-h-full max-w-4xl overflow-hidden rounded-xl border border-border bg-card p-2 shadow-elevated">
+        <img src={photo.src} alt={photo.title} className="max-h-[82vh] max-w-[88vw] rounded-lg object-contain" />
+        <Button type="button" variant="icon" className="absolute right-3 top-3 h-10 w-10 bg-card/95 shadow-elevated" onClick={onClose} aria-label="Fechar foto">
+          <X className="h-5 w-5" />
+        </Button>
+        <div className="absolute bottom-2 left-2 right-2 rounded-b-lg bg-overlay px-3 py-2 text-center text-xs text-foreground">{photo.title}</div>
+      </div>
+    </div>
   );
 }
 
@@ -402,6 +541,7 @@ function HomePage({
   onPdf,
   meetings,
   onNewMeeting,
+  onOpenPhoto,
 }: {
   query: string;
   navigate: (page: Page) => void;
@@ -412,6 +552,7 @@ function HomePage({
   onPdf: (id: string) => void;
   meetings: Meeting[];
   onNewMeeting: () => void;
+  onOpenPhoto: (src: string, title: string) => void;
 }) {
   const upcoming = dashboard?.upcoming_events ?? [];
   const shownEvents = useMemo(() => {
@@ -557,9 +698,15 @@ function HomePage({
                 {(dashboard?.quick_inventory ?? []).map((row) => (
                   <tr key={row.id} className="border-t border-border">
                     <td className="py-3 font-medium">
-                      <span className="mr-3 inline-grid h-9 w-9 place-items-center rounded-lg bg-sand text-brand">
-                        <InventoryIcon kind="decor" />
-                      </span>
+                      {row.image_url ? (
+                        <button type="button" className="mr-3 inline-block h-9 w-9 overflow-hidden rounded-lg border border-border align-middle" onClick={() => onOpenPhoto(row.image_url!, row.name)} title="Ampliar foto">
+                          <img src={row.image_url} alt={row.name} className="h-full w-full object-cover" />
+                        </button>
+                      ) : (
+                        <span className="mr-3 inline-grid h-9 w-9 place-items-center rounded-lg bg-sand text-brand align-middle">
+                          <InventoryIcon kind="decor" />
+                        </span>
+                      )}
                       {row.name}
                     </td>
                     <td>{row.total_quantity}</td>
@@ -784,6 +931,7 @@ function InventoryPage({
   openModal,
   onEdit,
   role,
+  onOpenPhoto,
 }: {
   query: string;
   inventory: InventoryItem[];
@@ -791,6 +939,7 @@ function InventoryPage({
   openModal: (kind: ModalKind) => void;
   onEdit: (item: InventoryItem) => void;
   role: AuthUser["role"];
+  onOpenPhoto: (src: string, title: string) => void;
 }) {
   const [category, setCategory] = useState("Todos");
   const categories = useMemo(
@@ -838,9 +987,15 @@ function InventoryPage({
             <article key={item.id} className="rounded-lg border border-border bg-card p-4 shadow-soft">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex min-w-0 items-center gap-3">
-                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-sand text-brand">
-                    <InventoryIcon kind={inventoryIconKind(item.category_name)} />
-                  </span>
+                  {item.image_url ? (
+                    <button type="button" className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-border bg-background" onClick={() => onOpenPhoto(item.image_url!, item.name)} title="Clique para ampliar a foto">
+                      <img src={item.image_url} alt={item.name} className="h-full w-full object-cover transition-transform hover:scale-105" />
+                    </button>
+                  ) : (
+                    <span className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-sand text-brand">
+                      <InventoryIcon kind={inventoryIconKind(item.category_name)} />
+                    </span>
+                  )}
                   <div className="min-w-0">
                     <h2 className="truncate font-display text-xl font-semibold">{item.name}</h2>
                     <p className="text-xs text-muted-foreground">{item.category_name || "Sem categoria"}</p>
@@ -959,13 +1114,17 @@ function ClientsPage({
   clients,
   events,
   openModal,
-  announce,
+  onEdit,
+  onDelete,
+  onOpenPhoto,
 }: {
   query: string;
   clients: Client[];
   events: EventRecord[];
   openModal: (kind: ModalKind) => void;
-  announce: (message: string) => void;
+  onEdit: (client: Client) => void;
+  onDelete: (client: Client) => void;
+  onOpenPhoto: (src: string, title: string) => void;
 }) {
   const list = useMemo(() => {
     const q = query.trim().toLocaleLowerCase("pt-BR");
@@ -980,7 +1139,7 @@ function ClientsPage({
       <PageHeader
         eyebrow="Relacionamento"
         title="Clientes"
-        description="Cadastro central usado por eventos e propostas."
+        description="Cadastro central usado por eventos e propostas, agora com identidade visual de cada cliente."
         action="Novo cliente"
         actionIcon={UserPlus}
         onAction={() => openModal("client")}
@@ -993,9 +1152,15 @@ function ClientsPage({
           return (
             <article key={client.id} className="rounded-lg border border-border bg-card p-4 shadow-soft">
               <div className="flex items-center gap-3">
-                <span className="grid h-11 w-11 place-items-center rounded-full bg-avatar font-display font-semibold text-primary">
-                  {initials(client.name)}
-                </span>
+                {client.photo_url ? (
+                  <button type="button" className="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-border bg-background" onClick={() => onOpenPhoto(client.photo_url!, client.name)} title="Clique para ampliar a foto">
+                    <img src={client.photo_url} alt={client.name} className="h-full w-full object-cover transition-transform hover:scale-105" />
+                  </button>
+                ) : (
+                  <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-avatar font-display font-semibold text-primary">
+                    {initials(client.name)}
+                  </span>
+                )}
                 <div className="min-w-0">
                   <h2 className="truncate font-display text-xl font-semibold">{client.name}</h2>
                   <p className="text-xs text-muted-foreground">{clientEvents.length} evento(s)</p>
@@ -1006,9 +1171,10 @@ function ClientsPage({
                 <p className="flex min-w-0 items-center gap-2"><Mail className="h-4 w-4 shrink-0 text-brand" /><span className="truncate">{client.email || "E-mail não informado"}</span></p>
                 <p className="flex items-center justify-between pt-1 text-muted-foreground"><span>Próximo/último evento</span><strong className="text-foreground">{formatDate(clientEvents[0]?.event_date)}</strong></p>
               </div>
-              <Button variant="outline" className="mt-4 h-9 w-full text-xs" onClick={() => announce(`Cliente ${client.name} selecionado`)}>
-                Ver histórico
-              </Button>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <Button variant="outline" className="h-9 text-xs" onClick={() => onEdit(client)}><Pencil className="h-4 w-4" />Editar</Button>
+                <Button variant="outline" className="h-9 text-xs text-danger" onClick={() => onDelete(client)}><Trash2 className="h-4 w-4" />Excluir</Button>
+              </div>
             </article>
           );
         })}
@@ -1794,6 +1960,14 @@ function EntityModal({
   const [error, setError] = useState("");
   const kind = state.kind;
   const editingInventory = state.inventoryItem;
+  const editingClient = state.client;
+  const [photoUrl, setPhotoUrl] = useState("");
+
+  useEffect(() => {
+    if (kind === "client") setPhotoUrl(editingClient?.photo_url ?? "");
+    else if (kind === "inventory") setPhotoUrl(editingInventory?.image_url ?? "");
+    else setPhotoUrl("");
+  }, [kind, editingClient?.id, editingInventory?.id]);
   const content = {
     event: { eyebrow: "Novo evento", title: "Vamos organizar o próximo evento", icon: CalendarDays, button: "Salvar evento" },
     inventory: {
@@ -1803,7 +1977,7 @@ function EntityModal({
       button: editingInventory ? "Salvar item" : "Adicionar item",
     },
     proposal: { eyebrow: "Nova proposta", title: "Criar proposta comercial", icon: FileText, button: "Criar proposta" },
-    client: { eyebrow: "Novo cliente", title: "Cadastrar cliente", icon: UserPlus, button: "Salvar cliente" },
+    client: { eyebrow: editingClient ? "Editar cliente" : "Novo cliente", title: editingClient ? editingClient.name : "Cadastrar cliente", icon: UserPlus, button: editingClient ? "Salvar alterações" : "Salvar cliente" },
   }[kind];
   const Icon = content.icon;
 
@@ -1816,12 +1990,15 @@ function EntityModal({
 
     try {
       if (kind === "client") {
-        await atelierApi.clients.create({
+        const payload = {
           name: value("name"),
           phone: value("phone"),
           email: value("email"),
           notes: value("notes"),
-        });
+          photo_url: photoUrl,
+        };
+        if (editingClient) await atelierApi.clients.update(editingClient.id, payload);
+        else await atelierApi.clients.create(payload);
       }
 
       if (kind === "inventory") {
@@ -1834,6 +2011,7 @@ function EntityModal({
           maintenance_quantity: Number(value("maintenance_quantity") || 0),
           ...(role === "admin" ? { default_unit_price: Number(value("default_unit_price") || 0) } : {}),
           description: value("description"),
+          image_url: photoUrl,
         };
         if (editingInventory) {
           await atelierApi.inventory.update(editingInventory.id, payload);
@@ -1907,15 +2085,17 @@ function EntityModal({
         <div className="grid max-h-[70vh] gap-4 overflow-y-auto p-5 sm:grid-cols-2">
           {kind === "client" && (
             <>
-              <Field label="Nome" name="name" required placeholder="Nome do cliente" />
-              <Field label="Telefone" name="phone" placeholder="(00) 00000-0000" />
-              <Field label="E-mail" name="email" type="email" placeholder="cliente@email.com" />
-              <Field label="Observação" name="notes" placeholder="Observação opcional" />
+              <PhotoUploadField label="Foto do cliente (opcional)" value={photoUrl} onChange={setPhotoUrl} fallback={<User className="h-7 w-7" />} />
+              <Field label="Nome" name="name" required placeholder="Nome do cliente" defaultValue={editingClient?.name} />
+              <Field label="Telefone" name="phone" placeholder="(00) 00000-0000" defaultValue={editingClient?.phone} />
+              <Field label="E-mail" name="email" type="email" placeholder="cliente@email.com" defaultValue={editingClient?.email} />
+              <div className="sm:col-span-2"><Field label="Observação" name="notes" placeholder="Observação opcional" defaultValue={editingClient?.notes} /></div>
             </>
           )}
 
           {kind === "inventory" && (
             <>
+              <PhotoUploadField label="Foto do item (opcional)" value={photoUrl} onChange={setPhotoUrl} fallback={<Package className="h-7 w-7" />} />
               <Field label="Nome do item" name="name" required defaultValue={editingInventory?.name} />
               <Field label="Categoria" name="category_name" defaultValue={editingInventory?.category_name} placeholder="Ex.: Louças" />
               <Field label="Quantidade total" name="total_quantity" type="number" min="0" required defaultValue={editingInventory?.total_quantity ?? 0} />
@@ -3055,6 +3235,7 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [issues, setIssues] = useState<string[]>([]);
   const [meetingCreateToken, setMeetingCreateToken] = useState(0);
+  const [photoLightbox, setPhotoLightbox] = useState<{ src: string; title: string } | null>(null);
 
   const announce = useCallback((message: string) => {
     setNotice(message);
@@ -3184,6 +3365,17 @@ function Dashboard() {
     }
   };
 
+  const deleteClient = async (client: Client) => {
+    if (!window.confirm(`Excluir o cadastro de ${client.name}? Eventos e propostas já vinculados manterão o histórico.`)) return;
+    try {
+      await atelierApi.clients.delete(client.id);
+      await refresh();
+      announce("Cliente excluído da lista");
+    } catch (error) {
+      announce(apiErrorMessage(error));
+    }
+  };
+
   const alertCount = backend.dashboard?.alerts?.length ?? 0;
 
   if (authChecking) return <div className="grid min-h-screen place-items-center bg-background"><div className="flex items-center gap-2 text-sm text-muted-foreground"><RefreshCw className="h-4 w-4 animate-spin"/>Carregando...</div></div>;
@@ -3246,6 +3438,7 @@ function Dashboard() {
               onPdf={openPdf}
               meetings={backend.meetings}
               onNewMeeting={openNewMeeting}
+              onOpenPhoto={(src, title) => setPhotoLightbox({ src, title })}
             />
           )}
           {user.role === "admin" && active === "Eventos" && <EventsPage query={query} events={backend.events} openModal={openModal} announce={announce} onReserve={setReservationEvent} onDetail={setEventDetailId} />}
@@ -3257,12 +3450,13 @@ function Dashboard() {
               openModal={openModal}
               onEdit={(item) => setModal({ kind: "inventory", inventoryItem: item })}
               role={user.role}
+              onOpenPhoto={(src, title) => setPhotoLightbox({ src, title })}
             />
           )}
           {user.role === "admin" && active === "Propostas" && (
             <ProposalsPage query={query} proposals={backend.proposals} openModal={openModal} onPreview={previewProposal} onPdf={openPdf} onEdit={setProposalEditorId} onDelete={(id) => void deleteProposal(id)} />
           )}
-          {user.role === "admin" && active === "Clientes" && <ClientsPage query={query} clients={backend.clients} events={backend.events} openModal={openModal} announce={announce} />}
+          {user.role === "admin" && active === "Clientes" && <ClientsPage query={query} clients={backend.clients} events={backend.events} openModal={openModal} onEdit={(client) => setModal({ kind: "client", client })} onDelete={(client) => void deleteClient(client)} onOpenPhoto={(src, title) => setPhotoLightbox({ src, title })} />}
           {user.role === "admin" && active === "Reuniões" && <MeetingsPage query={query} meetings={backend.meetings} clients={backend.clients} settings={backend.settings} refresh={refresh} announce={announce} openCreateToken={meetingCreateToken} />}
         </main>
       </div>
@@ -3324,6 +3518,7 @@ function Dashboard() {
         />
       )}
       {preview && <ProposalPreview html={preview.html} title={preview.title} onClose={() => setPreview(null)} />}
+      {photoLightbox && <PhotoLightbox photo={photoLightbox} onClose={() => setPhotoLightbox(null)} />}
       {notice && (
         <div role="status" className="fixed bottom-5 right-5 z-[80] flex max-w-[calc(100vw-2.5rem)] items-center gap-2 rounded-md border border-border bg-popover px-4 py-3 text-sm text-popover-foreground shadow-elevated"><Sparkles className="h-4 w-4 shrink-0 text-brand" />{notice}</div>
       )}
