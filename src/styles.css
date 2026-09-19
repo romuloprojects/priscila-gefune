@@ -410,7 +410,7 @@ aside.bg-sidebar > div:first-child img {
   background: linear-gradient(180deg, oklch(0.8491 0.0994 85.4), oklch(0.6617 0.1052 75.38));
   border: 1px solid color-mix(in oklab, var(--brand) 88%, white 12%);
 }
-.hover\\:bg-primary\\/90:hover {
+.hover\:bg-primary\/90:hover {
   background: linear-gradient(180deg, oklch(0.88 0.09 86), oklch(0.70 0.10 77));
 }
 
