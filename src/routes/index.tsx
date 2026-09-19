@@ -2717,44 +2717,44 @@ function LoginPage({ onLoggedIn }: { onLoggedIn: (user: AuthUser) => void }) {
   };
 
   return (
-    <main className="apg-login-v8112">
-      <section className="apg-login-v8112-hero" aria-label="Atelier Priscila Gefune">
+    <main className="apg-login-v84">
+      <section className="apg-login-v84-hero" aria-label="Atelier Priscila Gefune">
         <img src={loginVisual} alt="Atelier Priscila Gefune" />
       </section>
 
-      <section className="apg-login-v8112-panel">
-        <div className="apg-login-v8112-frame" aria-hidden="true" />
-        <div className="apg-login-v8112-scroll">
-          <form onSubmit={submit} autoComplete="off" className="apg-login-v8112-form">
-            <header className="apg-login-v8112-head">
-              <p className="apg-login-v8112-eyebrow">Bem-vinda ao</p>
-              <p className="apg-login-v8112-brand">Atelier Priscila Gefune</p>
-              <div className="apg-login-v8112-divider"><span /><b>♡</b><span /></div>
+      <section className="apg-login-v84-panel">
+        <div className="apg-login-v84-frame" aria-hidden="true" />
+        <div className="apg-login-v84-scroll">
+          <form onSubmit={submit} autoComplete="off" className="apg-login-v84-form">
+            <header className="apg-login-v84-head">
+              <p className="apg-login-v84-eyebrow">Bem-vinda ao</p>
+              <p className="apg-login-v84-brand">Atelier Priscila Gefune</p>
+              <div className="apg-login-v84-divider"><span /><b>♡</b><span /></div>
               <h1>Bem-vinda</h1>
               <p>Acesse sua área de gestão do Atelier.</p>
             </header>
 
-            <div className="apg-login-v8112-fields">
+            <div className="apg-login-v84-fields">
               <label>
                 <span>Usuário</span>
-                <div className="apg-login-v8112-input">
+                <div className="apg-login-v84-input">
                   <User aria-hidden="true" />
-                  <input autoComplete="off" name="atelier-user-v8112" type="text" value={username} onChange={e=>setUsername(e.target.value)} required placeholder="Digite seu usuário" />
+                  <input autoComplete="off" name="atelier-user" type="text" value={username} onChange={e=>setUsername(e.target.value)} required placeholder="Digite seu usuário" />
                 </div>
               </label>
               <label>
                 <span>Senha</span>
-                <div className="apg-login-v8112-input">
+                <div className="apg-login-v84-input">
                   <LockKeyhole aria-hidden="true" />
                   <input autoComplete="current-password" type={showPassword?"text":"password"} value={password} onChange={e=>setPassword(e.target.value)} required placeholder="Digite sua senha" />
-                  <button type="button" className="apg-login-v8112-eye" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?"Ocultar senha":"Mostrar senha"}>{showPassword?<EyeOff />:<Eye />}</button>
+                  <button type="button" className="apg-login-v84-eye" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?"Ocultar senha":"Mostrar senha"}>{showPassword?<EyeOff />:<Eye />}</button>
                 </div>
               </label>
             </div>
 
-            {error && <div className="apg-login-v8112-error">{error}</div>}
-            <button disabled={busy} className="apg-login-v8112-submit">{busy?"Entrando...":"Entrar"}<ArrowRight /></button>
-            <div className="apg-login-v8112-foot"><span/><LockKeyhole/><em>Acesso exclusivo ao Atelier Priscila Gefune</em><span/></div>
+            {error && <div className="apg-login-v84-error">{error}</div>}
+            <button disabled={busy} className="apg-login-v84-submit">{busy?"Entrando...":"Entrar"}<ArrowRight /></button>
+            <div className="apg-login-v84-foot"><span/><LockKeyhole/><em>Acesso exclusivo ao Atelier Priscila Gefune</em><span/></div>
           </form>
         </div>
       </section>

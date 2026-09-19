@@ -207,3 +207,74 @@ body {
 .apg-theme-black-gold * {
   scrollbar-color: #6a5436 #0d0c0a;
 }
+
+/* V8.11.3 LOGIN SAFE OVERRIDE */
+/* V8.11.3 LOGIN SAFE OVERRIDE
+ * O login mantém o DOM/namespace V8.4 que já funcionava em produção.
+ * As cores ficam nesta folha de tema (carregada DEPOIS de login-v84.css),
+ * evitando depender de um novo asset CSS ou de um novo namespace.
+ */
+.apg-login-v84,
+.apg-login-v84 * { box-sizing: border-box; }
+
+.apg-login-v84 {
+  background: #0d0c0a !important;
+  color: #eee6da !important;
+}
+.apg-login-v84-hero {
+  background: #21180f !important;
+  border-right-color: rgba(212,176,106,.26) !important;
+}
+.apg-login-v84-hero::after {
+  background: linear-gradient(90deg, transparent, rgba(13,12,10,.36)) !important;
+}
+.apg-login-v84-panel {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(196,151,77,.11), transparent 27rem),
+    radial-gradient(circle at 0% 100%, rgba(196,151,77,.07), transparent 24rem),
+    #0d0c0a !important;
+}
+.apg-login-v84-frame {
+  border-color: rgba(208,176,109,.40) !important;
+}
+.apg-login-v84-eyebrow,
+.apg-login-v84-brand,
+.apg-login-v84-divider { color: #d4b06a !important; }
+.apg-login-v84-divider span { background: #9b7c49 !important; }
+.apg-login-v84-head h1 { color: #f4eadc !important; }
+.apg-login-v84-head > p:last-child { color: #aaa094 !important; }
+.apg-login-v84-fields label > span { color: #eee6da !important; }
+.apg-login-v84-input > svg { color: #d4b06a !important; }
+.apg-login-v84-input input {
+  border-color: #493b2b !important;
+  background: #13110e !important;
+  color: #eee6da !important;
+}
+.apg-login-v84-input input::placeholder { color: #887f74 !important; }
+.apg-login-v84-input input:focus {
+  border-color: #d4b06a !important;
+  background: #171410 !important;
+  box-shadow: 0 0 0 3px rgba(212,176,106,.14) !important;
+}
+.apg-login-v84-eye {
+  background: transparent !important;
+  color: #b4a58f !important;
+}
+.apg-login-v84-eye:hover { background: rgba(212,176,106,.09) !important; }
+.apg-login-v84-error {
+  border-color: #6f302b !important;
+  background: #2b1715 !important;
+  color: #df7d72 !important;
+}
+.apg-login-v84-submit {
+  background: linear-gradient(180deg,#e2bf7a,#b88942) !important;
+  color: #17110a !important;
+  box-shadow: 0 10px 28px rgba(185,137,66,.24) !important;
+  margin-top: 30px !important;
+}
+.apg-login-v84-submit:hover {
+  background: linear-gradient(180deg,#edcf8e,#c49349) !important;
+}
+.apg-login-v84-foot { color: #8f8477 !important; }
+.apg-login-v84-foot span { background: #4a3a29 !important; }
+.apg-login-v84-foot svg { color: #b88942 !important; }

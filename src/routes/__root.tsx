@@ -10,8 +10,8 @@ import {
 import { type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import loginCss from "../login-v84.css?url";
 import blackGoldCss from "../theme-black-gold-v8111.css?url";
-import loginV8112Css from "../login-v8112.css?url";
 
 function NotFoundComponent() {
   return (
@@ -88,8 +88,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
+      { rel: "stylesheet", href: loginCss },
       { rel: "stylesheet", href: blackGoldCss },
-      { rel: "stylesheet", href: loginV8112Css },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700&display=swap" },
