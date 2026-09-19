@@ -336,3 +336,96 @@
 .meeting-save:disabled { opacity:.6; cursor:wait; }
 @media (min-width:720px) { .meeting-modal-overlay{align-items:center;padding:22px} .meeting-modal{width:min(1100px,96vw); height:min(900px,94dvh); border-radius:18px} .meeting-fields{grid-template-columns:repeat(2,minmax(0,1fr))} .meeting-span-2{grid-column:1/-1} .meeting-modal-scroll{padding:26px 30px} .meeting-modal-header{padding:18px 30px} .meeting-modal-footer{padding-left:30px;padding-right:30px} }
 @media (min-width:1100px) { .meeting-modal{height:min(920px,92dvh)} .meeting-notes-block textarea{min-height:470px} }
+
+/* V8.11 - TEMA HOMOLOGADO PRETO + DOURADO
+ * Baseline visual: homologacao real V3 aprovada em 2026-09-19.
+ * Mantem a composicao/UX da V8.10 e altera somente a camada visual.
+ */
+:root {
+  color-scheme: dark;
+  --background: oklch(0.1547 0.0045 84.57);
+  --foreground: oklch(0.928 0.0183 78.24);
+  --card: oklch(0.1876 0.0085 84.57);
+  --card-foreground: oklch(0.928 0.0183 78.24);
+  --popover: oklch(0.1876 0.0085 84.57);
+  --popover-foreground: oklch(0.928 0.0183 78.24);
+  --primary: oklch(0.7741 0.0981 82.99);
+  --primary-foreground: oklch(0.1829 0.0167 70.78);
+  --secondary: oklch(0.2289 0.0128 77.98);
+  --secondary-foreground: oklch(0.928 0.0183 78.24);
+  --muted: oklch(0.2289 0.0128 77.98);
+  --muted-foreground: oklch(0.7108 0.0207 72.49);
+  --accent: oklch(0.227 0.024 66.12);
+  --accent-foreground: oklch(0.8651 0.0893 85.81);
+  --destructive: oklch(0.6949 0.1234 27.41);
+  --destructive-foreground: oklch(0.9411 0.0216 76.53);
+  --border: oklch(0.3164 0.0249 71.82);
+  --input: oklch(0.3627 0.0326 70.25);
+  --ring: oklch(0.7741 0.0981 82.99);
+  --chart-1: oklch(0.7741 0.0981 82.99);
+  --chart-2: oklch(0.7725 0.075 150.04);
+  --chart-3: oklch(0.6949 0.1234 27.41);
+  --chart-4: oklch(0.8651 0.0893 85.81);
+  --chart-5: oklch(0.6617 0.1052 75.38);
+  --sidebar: oklch(0.1406 0.003 69.39);
+  --sidebar-foreground: oklch(0.865 0.018 78);
+  --sidebar-primary: oklch(0.7741 0.0981 82.99);
+  --sidebar-primary-foreground: oklch(0.9411 0.0216 76.53);
+  --sidebar-accent: oklch(0.2546 0.0251 74.28);
+  --sidebar-accent-foreground: oklch(0.9411 0.0216 76.53);
+  --sidebar-border: oklch(0.3164 0.0249 71.82);
+  --sidebar-ring: oklch(0.7741 0.0981 82.99);
+  --brand: oklch(0.7741 0.0981 82.99);
+  --success: oklch(0.7725 0.075 150.04);
+  --danger: oklch(0.6949 0.1234 27.41);
+  --sage: oklch(0.2548 0.0288 156.29);
+  --sand: oklch(0.2546 0.0251 74.28);
+  --blush: oklch(0.251 0.0355 25.51);
+  --blush-strong: oklch(0.62 0.105 28);
+  --peach: oklch(0.227 0.024 66.12);
+  --surface: oklch(0.1743 0.0069 78.12);
+  --avatar: oklch(0.2561 0.0247 69.04);
+  --overlay: oklch(0.04 0 0 / 72%);
+  --shadow-soft: 0 8px 24px oklch(0 0 0 / 28%);
+  --shadow-elevated: 0 18px 50px oklch(0 0 0 / 48%);
+  --shadow-button: 0 6px 16px oklch(0.52 0.095 78 / 24%);
+  --hero-wash: linear-gradient(90deg, oklch(0.1547 0.0045 84.57 / 98%) 0%, oklch(0.1547 0.0045 84.57 / 93%) 47%, oklch(0.1547 0.0045 84.57 / 42%) 72%, oklch(0.1547 0.0045 84.57 / 16%) 100%);
+}
+
+html { background: var(--background); }
+body { min-height: 100vh; }
+::selection { background: color-mix(in oklab, var(--brand) 35%, transparent); color: var(--foreground); }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--brand); }
+input::placeholder, textarea::placeholder { color: color-mix(in oklab, var(--muted-foreground) 82%, transparent); }
+
+/* Sidebar/logo preto+dourado aprovado. */
+aside.bg-sidebar > div:first-child img {
+  border-radius: 6px;
+  mix-blend-mode: screen;
+  filter: saturate(.92) contrast(1.04);
+}
+
+/* Primary CTA: acabamento champagne/dourado sem mudar o componente. */
+.bg-primary {
+  background: linear-gradient(180deg, oklch(0.8491 0.0994 85.4), oklch(0.6617 0.1052 75.38));
+  border: 1px solid color-mix(in oklab, var(--brand) 88%, white 12%);
+}
+.hover\\:bg-primary\\/90:hover {
+  background: linear-gradient(180deg, oklch(0.88 0.09 86), oklch(0.70 0.10 77));
+}
+
+/* Superficies internas e tabelas mantem densidade da V8.10 com leitura premium. */
+.bg-card, .bg-surface { backdrop-filter: saturate(1.02); }
+thead { color: var(--muted-foreground); }
+tbody tr { border-color: var(--border); }
+
+/* Reunioes: remove residuos claros do layout homologado antigo. */
+.meeting-modal-overlay { background: oklch(0 0 0 / 72%); }
+.meeting-modal-header { background: var(--peach); }
+.meeting-modal-close { background: var(--card); border-color: var(--border); color: var(--foreground); }
+.meeting-modal-close:hover { background: var(--muted); }
+.meeting-send-note { background: color-mix(in oklab, var(--sand) 84%, black); }
+.meeting-save { border-color: var(--brand); background: linear-gradient(180deg, oklch(0.8491 0.0994 85.4), oklch(0.6617 0.1052 75.38)); color: oklch(0.1829 0.0167 70.78); }
+
+/* Scrollbars discretas no tema escuro. */
+* { scrollbar-color: color-mix(in oklab, var(--brand) 42%, var(--card)) var(--background); }

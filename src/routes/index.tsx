@@ -50,7 +50,7 @@ import {
 } from "react";
 
 import floralImage from "../assets/eventos-floral.jpg";
-import priscilaLogo from "../assets/atelier-priscila-gefune-logo-light.png";
+import priscilaLogo from "../assets/atelier-priscila-gefune-logo-black-gold.jpg";
 import loginVisual from "../assets/login-cover-homologado.png";
 import {
   AtelierApiError,
@@ -2005,7 +2005,7 @@ function ProposalPreview({ html, title, onClose }: { html: string; title: string
           </div>
           <Button variant="icon" className="h-9 w-9" onClick={onClose} aria-label="Fechar prévia"><X className="h-5 w-5" /></Button>
         </div>
-        <iframe title={title} srcDoc={html} className="min-h-0 flex-1 bg-white" />
+        <iframe title={title} srcDoc={html} className="min-h-0 flex-1 bg-background" />
       </div>
     </div>
   );
@@ -2942,7 +2942,7 @@ function MeetingModal({ meeting, reportEmail, onClose, onSaved }: { meeting:Meet
     aria-modal="true"
     aria-label={meeting ? "Editar reunião" : "Nova reunião"}
     className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-3 sm:p-5"
-    style={{ position:"fixed", inset:0, zIndex:100, background:"rgba(43,33,27,.48)" }}
+    style={{ position:"fixed", inset:0, zIndex:100, background:"rgba(0,0,0,.72)" }}
   >
     <form
       onSubmit={submit}
@@ -2954,7 +2954,7 @@ function MeetingModal({ meeting, reportEmail, onClose, onSaved }: { meeting:Meet
           <p className="text-[10px] font-bold uppercase tracking-[.22em] text-brand">REUNIÃO</p>
           <h2 className="mt-1 font-display text-4xl font-semibold leading-none">{meeting ? "Editar reunião" : "Nova reunião"}</h2>
         </div>
-        <button type="button" onClick={onClose} aria-label="Fechar" className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-border bg-white/80 text-foreground shadow-soft hover:bg-white"><X className="h-5 w-5" /></button>
+        <button type="button" onClick={onClose} aria-label="Fechar" className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-border bg-card text-foreground shadow-soft hover:bg-muted"><X className="h-5 w-5" /></button>
       </header>
 
       <div className="min-h-0 overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">
