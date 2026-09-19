@@ -2701,6 +2701,52 @@ function apiErrorMessage(error: unknown) {
 }
 
 
+const LOGIN_RUNTIME_THEME_CSS = `
+/* V8.11.4 — login theme injected with the rendered route.
+   This intentionally lives in the JS/SSR output so it cannot depend on a stale
+   external login stylesheet in the deployment/CDN cache. Layout still comes
+   from the stable .apg-login-v84 stylesheet. */
+.apg-login-v84 { background:#0d0c0a !important; color:#eee6da !important; }
+.apg-login-v84-hero { background:#21180f !important; border-right-color:rgba(212,176,106,.28) !important; }
+.apg-login-v84-hero::after { background:linear-gradient(90deg,transparent,rgba(13,12,10,.36)) !important; }
+.apg-login-v84-panel {
+  background:radial-gradient(circle at 100% 0%,rgba(196,151,77,.12),transparent 27rem),radial-gradient(circle at 0% 100%,rgba(196,151,77,.08),transparent 24rem),#0d0c0a !important;
+}
+.apg-login-v84-frame { border-color:rgba(208,176,109,.42) !important; box-shadow:inset 0 0 0 1px rgba(212,176,106,.04) !important; }
+.apg-login-v84-eyebrow,.apg-login-v84-brand,.apg-login-v84-divider { color:#d4b06a !important; }
+.apg-login-v84-divider span { background:#9b7c49 !important; }
+.apg-login-v84-head h1 { color:#f4eadc !important; }
+.apg-login-v84-head>p:last-child { color:#aaa094 !important; }
+.apg-login-v84-fields label>span { color:#eee6da !important; }
+.apg-login-v84-input>svg { color:#d4b06a !important; }
+.apg-login-v84-input input {
+  border-color:#493b2b !important; background:#13110e !important; color:#eee6da !important; color-scheme:dark !important;
+  -webkit-text-fill-color:#eee6da !important;
+}
+.apg-login-v84-input input::placeholder { color:#887f74 !important; -webkit-text-fill-color:#887f74 !important; opacity:1 !important; }
+.apg-login-v84-input input:focus { border-color:#d4b06a !important; background:#171410 !important; box-shadow:0 0 0 3px rgba(212,176,106,.14) !important; }
+.apg-login-v84-input input:-webkit-autofill,
+.apg-login-v84-input input:-webkit-autofill:hover,
+.apg-login-v84-input input:-webkit-autofill:focus {
+  -webkit-box-shadow:0 0 0 1000px #13110e inset !important;
+  -webkit-text-fill-color:#eee6da !important;
+  caret-color:#eee6da !important;
+  border-color:#493b2b !important;
+}
+.apg-login-v84-eye { background:transparent !important; color:#b4a58f !important; }
+.apg-login-v84-eye:hover { background:rgba(212,176,106,.09) !important; color:#e2bf7a !important; }
+.apg-login-v84-error { border-color:#6f302b !important; background:#2b1715 !important; color:#df7d72 !important; }
+.apg-login-v84-submit {
+  margin-top:30px !important; border-color:#c29d58 !important;
+  background:linear-gradient(180deg,#e2bf7a,#b88942) !important; color:#17110a !important;
+  box-shadow:0 10px 28px rgba(185,137,66,.24) !important;
+}
+.apg-login-v84-submit:hover { background:linear-gradient(180deg,#edcf8e,#c49349) !important; }
+.apg-login-v84-foot { color:#8f8477 !important; }
+.apg-login-v84-foot span { background:#4a3a29 !important; }
+.apg-login-v84-foot svg { color:#b88942 !important; }
+`;
+
 function LoginPage({ onLoggedIn }: { onLoggedIn: (user: AuthUser) => void }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -2718,6 +2764,7 @@ function LoginPage({ onLoggedIn }: { onLoggedIn: (user: AuthUser) => void }) {
 
   return (
     <main className="apg-login-v84">
+      <style>{LOGIN_RUNTIME_THEME_CSS}</style>
       <section className="apg-login-v84-hero" aria-label="Atelier Priscila Gefune">
         <img src={loginVisual} alt="Atelier Priscila Gefune" />
       </section>
