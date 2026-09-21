@@ -110,6 +110,56 @@ function stripCommercialInventoryFields(value: unknown): unknown {
   return value;
 }
 
+
+function safePdfFilenamePart(value: unknown, fallback = "Cliente") {
+  const clean = String(value ?? fallback)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  return clean || fallback;
+}
+
+function pdfFilenameDate(value: unknown) {
+  const match = String(value ?? "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return match ? `${match[3]}-${match[2]}-${match[1]}` : "sem-data";
+}
+
+function proposalPdfContentDisposition(filename: string) {
+  const safe = filename.replace(/["\r\n]/g, "");
+  return `inline; filename="${safe}"; filename*=UTF-8''${encodeURIComponent(safe)}`;
+}
+
+async function resolveProposalPdfFilename(request: Request, token: string) {
+  try {
+    // Reutiliza o mesmo ?id=<uuid> recebido em /proposal-pdf.
+    // callN8n preserva a query string do Request.
+    const detailRequest = new Request(request.url, {
+      method: "GET",
+      headers: { accept: "application/json" },
+    });
+    const response = await callN8n("/proposal-detail", detailRequest, token);
+    if (!response.ok) return null;
+
+    const payload = await response.json() as any;
+    if (!payload?.ok) return null;
+
+    const recipientName =
+      payload?.client?.name ||
+      payload?.data?.recipient_name ||
+      "Cliente";
+
+    const eventDate =
+      payload?.event?.event_date ||
+      payload?.data?.event_date_snapshot ||
+      "";
+
+    return `Proposta_${safePdfFilenamePart(recipientName)}_${pdfFilenameDate(eventDate)}.pdf`;
+  } catch {
+    return null;
+  }
+}
+
 async function proxyAtelierApi(request: Request): Promise<Response | null> {
   const incoming = new URL(request.url);
   const prefix = "/api/atelier";
@@ -181,9 +231,20 @@ async function proxyAtelierApi(request: Request): Promise<Response | null> {
     const upstreamContentType = upstream.headers.get("content-type");
     const upstreamDisposition = upstream.headers.get("content-disposition");
     if (upstreamContentType) responseHeaders.set("content-type", upstreamContentType);
-    if (upstreamDisposition) responseHeaders.set("content-disposition", upstreamDisposition);
-    if (!upstreamDisposition && suffix.endsWith("/proposal-pdf")) responseHeaders.set("content-disposition", 'inline; filename="proposta-atelier-priscila-gefune.pdf"');
-    if (!upstreamDisposition && suffix.endsWith("/meeting-pdf")) responseHeaders.set("content-disposition", 'attachment; filename="relatorio-reuniao-atelier-priscila-gefune.pdf"');
+
+    if (suffix.endsWith("/proposal-pdf") && upstream.ok) {
+      // O workflow 53 já calcula binary.data.fileName, porém a resposta binária
+      // do Webhook não expõe esse metadata como Content-Disposition.
+      // O proxy resolve o nome/data da proposta e define o header que o navegador usa ao salvar.
+      const dynamicFilename = await resolveProposalPdfFilename(request, token);
+      const filename = dynamicFilename || "Proposta_Atelier_Priscila_Gefune.pdf";
+      responseHeaders.set("content-disposition", proposalPdfContentDisposition(filename));
+    } else if (upstreamDisposition) {
+      responseHeaders.set("content-disposition", upstreamDisposition);
+    } else if (suffix.endsWith("/meeting-pdf")) {
+      responseHeaders.set("content-disposition", 'attachment; filename="relatorio-reuniao-atelier-priscila-gefune.pdf"');
+    }
+
     responseHeaders.set("cache-control", "no-store");
     return new Response(upstream.body, { status: upstream.status, statusText: upstream.statusText, headers: responseHeaders });
   } catch (error) {
