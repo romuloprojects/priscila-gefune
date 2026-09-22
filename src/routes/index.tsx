@@ -1623,6 +1623,7 @@ function ProposalCreateModal({
   announce: (message: string) => void;
 }) {
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
   const [recipientMode, setRecipientMode] = useState<"client" | "contact">("contact");
   const [clientId, setClientId] = useState("");
@@ -2184,6 +2185,26 @@ function EntityModal({
     }
   };
 
+  const deleteInventoryItem = async () => {
+    if (kind !== "inventory" || !editingInventory || role !== "admin") return;
+    if (!window.confirm(`Excluir ${editingInventory.name} do estoque? O item deixará de aparecer no catálogo, mas o histórico já vinculado a eventos e propostas será preservado.`)) return;
+
+    setDeleting(true);
+    setError("");
+    try {
+      await atelierApi.inventory.update(editingInventory.id, { active: false });
+      await onSaved();
+      announce(`Item ${editingInventory.name} excluído do estoque`);
+      onClose();
+    } catch (caught) {
+      const message = apiErrorMessage(caught);
+      setError(message);
+      announce(message);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[70] grid place-items-center bg-overlay px-4" role="dialog" aria-modal="true">
       <form className="w-full max-w-xl overflow-hidden rounded-xl border border-border bg-card shadow-elevated" onSubmit={submit}>
@@ -2278,9 +2299,20 @@ function EntityModal({
           {error && <div className="sm:col-span-2 rounded-lg bg-blush px-4 py-3 text-xs text-danger">{error}</div>}
         </div>
 
-        <div className="flex justify-end gap-2 border-t border-border px-5 py-4">
-          <Button variant="outline" className="h-10 px-4" onClick={onClose} type="button">Cancelar</Button>
-          <Button variant="primary" className="h-10 px-5" type="submit" disabled={saving}>{saving ? "Salvando..." : content.button}</Button>
+        <div className="flex flex-wrap items-center gap-2 border-t border-border px-5 py-4">
+          {kind === "inventory" && editingInventory && role === "admin" && (
+            <Button
+              variant="outline"
+              className="mr-auto h-10 border-danger/35 px-4 text-danger hover:bg-blush"
+              onClick={() => void deleteInventoryItem()}
+              type="button"
+              disabled={saving || deleting}
+            >
+              <Trash2 className="h-4 w-4" />{deleting ? "Excluindo..." : "Excluir item"}
+            </Button>
+          )}
+          <Button variant="outline" className="h-10 px-4" onClick={onClose} type="button" disabled={saving || deleting}>Cancelar</Button>
+          <Button variant="primary" className="h-10 px-5" type="submit" disabled={saving || deleting}>{saving ? "Salvando..." : content.button}</Button>
         </div>
       </form>
     </div>
@@ -3369,7 +3401,7 @@ function Dashboard() {
       if (results[1].status === "rejected") nextIssues.push(`Disponibilidade: ${apiErrorMessage(results[1].reason)}`);
       setBackend((previous) => ({
         ...EMPTY_BACKEND,
-        inventory: results[0].status === "fulfilled" ? results[0].value.data : previous.inventory,
+        inventory: results[0].status === "fulfilled" ? results[0].value.data.filter((item) => item.active !== false) : previous.inventory,
         availability: results[1].status === "fulfilled" ? results[1].value.data : previous.availability,
         healthy: true,
       }));
@@ -3406,7 +3438,7 @@ function Dashboard() {
       dashboard: results[1].status === "fulfilled" ? results[1].value : previous.dashboard,
       clients: results[2].status === "fulfilled" ? results[2].value.data : previous.clients,
       events: results[3].status === "fulfilled" ? results[3].value.data : previous.events,
-      inventory: results[4].status === "fulfilled" ? results[4].value.data : previous.inventory,
+      inventory: results[4].status === "fulfilled" ? results[4].value.data.filter((item) => item.active !== false) : previous.inventory,
       availability: results[5].status === "fulfilled" ? results[5].value.data : previous.availability,
       proposals: results[6].status === "fulfilled" ? results[6].value.data : previous.proposals,
       packages: results[7].status === "fulfilled" ? results[7].value.data : previous.packages,
