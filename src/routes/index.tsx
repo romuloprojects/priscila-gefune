@@ -559,7 +559,7 @@ function HomePage({
 }) {
   const upcoming = dashboard?.upcoming_events ?? [];
   const eventRecordsById = useMemo(() => new Map(events.map((event) => [event.id, event])), [events]);
-  const [eventItemCounts, setEventItemCounts] = useState<Record<string, number>>({});
+  const [eventReservationSummary, setEventReservationSummary] = useState<Record<string, { itemCount: number; pieceCount: number }>>({});
 
   const shownEvents = useMemo(() => {
     const q = query.trim().toLocaleLowerCase("pt-BR");
@@ -573,38 +573,52 @@ function HomePage({
       .slice(0, 3);
   }, [query, upcoming]);
 
+  const reservationCandidates = useMemo(() => {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    return events.filter((event) => {
+      if (!event.reserve_from || !event.reserve_until) return false;
+      const until = new Date(`${event.reserve_until.slice(0, 10)}T23:59:59`);
+      return !Number.isNaN(until.getTime()) && until >= startOfToday;
+    });
+  }, [events]);
+
   useEffect(() => {
     let cancelled = false;
-    const needsCount = shownEvents.filter((event) => {
-      const fullEvent = eventRecordsById.get(event.id);
-      return Boolean(fullEvent?.reserve_from && fullEvent?.reserve_until);
-    });
-
-    if (!needsCount.length) {
-      setEventItemCounts({});
+    if (!reservationCandidates.length) {
+      setEventReservationSummary({});
       return () => {
         cancelled = true;
       };
     }
 
     void Promise.all(
-      needsCount.map(async (event) => {
+      reservationCandidates.map(async (event) => {
         try {
           const result = await atelierApi.events.items(event.id);
-          return [event.id, result.items.length] as const;
+          const pieceCount = result.items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+          return [event.id, { itemCount: result.items.length, pieceCount }] as const;
         } catch {
-          return [event.id, 0] as const;
+          return [event.id, { itemCount: 0, pieceCount: 0 }] as const;
         }
       }),
     ).then((entries) => {
       if (cancelled) return;
-      setEventItemCounts(Object.fromEntries(entries));
+      setEventReservationSummary(Object.fromEntries(entries));
     });
 
     return () => {
       cancelled = true;
     };
-  }, [shownEvents, eventRecordsById]);
+  }, [reservationCandidates]);
+
+  const activeReservationAlerts = useMemo(
+    () => reservationCandidates
+      .map((event) => ({ event, summary: eventReservationSummary[event.id] }))
+      .filter((entry) => (entry.summary?.itemCount ?? 0) > 0)
+      .sort((a, b) => String(a.event.reserve_from).localeCompare(String(b.event.reserve_from))),
+    [reservationCandidates, eventReservationSummary],
+  );
 
   const formattedDate = new Intl.DateTimeFormat("pt-BR", {
     weekday: "long",
@@ -638,7 +652,7 @@ function HomePage({
           width={1920}
           height={1024}
           alt="Priscila Gefune em retrato no Atelier"
-          className="absolute inset-0 h-full w-full object-cover object-[72%_28%] sm:object-right"
+          className="absolute inset-0 h-full w-full object-cover object-center"
         />
         <div className="absolute inset-0 bg-hero-wash" />
         <div className="relative z-10 max-w-2xl">
@@ -686,7 +700,7 @@ function HomePage({
                 const status = eventStatusLabel(event.status);
                 const fullEvent = eventRecordsById.get(event.id);
                 const hasReservedStock = Boolean(fullEvent?.reserve_from && fullEvent?.reserve_until);
-                const reservedItemCount = eventItemCounts[event.id] ?? 0;
+                const reservedItemCount = eventReservationSummary[event.id]?.itemCount ?? 0;
                 return (
                   <button
                     key={event.id}
@@ -830,6 +844,30 @@ function HomePage({
         <article className="overflow-hidden rounded-lg border border-border bg-card shadow-soft">
           <SectionTitle icon={Bell}>Alertas importantes</SectionTitle>
           <div className="px-4">
+            {activeReservationAlerts.map(({ event, summary }) => {
+              const startsAt = event.reserve_from ? new Date(`${event.reserve_from.slice(0, 10)}T00:00:00`) : null;
+              const now = new Date();
+              const reservationLabel = startsAt && startsAt <= now ? "Reserva em andamento" : "Reserva programada";
+              return (
+                <Button
+                  key={`reservation-${event.id}`}
+                  className="grid min-h-[62px] w-full grid-cols-[auto_minmax(0,1fr)_auto] gap-3 border-b border-border px-0 text-left text-xs last:border-0"
+                  onClick={() => navigate("Eventos")}
+                >
+                  <span className="grid h-8 w-8 place-items-center rounded-full bg-sand text-brand">
+                    <PackageCheck className="h-4 w-4" />
+                  </span>
+                  <span className="min-w-0">
+                    <strong className="block truncate font-semibold text-foreground">{reservationLabel} · {event.title}</strong>
+                    <span className="mt-0.5 block text-[11px] leading-4 text-muted-foreground">
+                      {summary.itemCount} {summary.itemCount === 1 ? "item" : "itens"} · {summary.pieceCount} {summary.pieceCount === 1 ? "peça" : "peças"}
+                      {event.reserve_from && event.reserve_until ? ` · ${formatDate(event.reserve_from)} a ${formatDate(event.reserve_until)}` : ""}
+                    </span>
+                  </span>
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              );
+            })}
             {(dashboard?.alerts ?? []).map((alert, index) => {
               const kind = alert.kind ?? "warning";
               const Icon = kind === "danger" ? AlertTriangle : kind === "warning" ? Clock : FileText;
@@ -853,12 +891,12 @@ function HomePage({
                 </Button>
               );
             })}
-            {!dashboard?.alerts?.length && (
+            {!activeReservationAlerts.length && !dashboard?.alerts?.length && (
               <div className="flex min-h-[108px] items-center gap-3 px-1 text-xs text-success">
                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-sage">
                   <Check className="h-4 w-4" />
                 </span>
-                Nenhum alerta automático pendente neste momento.
+                Nenhum alerta automático ou reserva ativa pendente neste momento.
               </div>
             )}
           </div>
@@ -3451,7 +3489,14 @@ function Dashboard() {
     }
   };
 
-  const alertCount = backend.dashboard?.alerts?.length ?? 0;
+  const reservationAlertCount = backend.events.filter((event) => {
+    if (!event.reserve_from || !event.reserve_until) return false;
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const until = new Date(`${event.reserve_until.slice(0, 10)}T23:59:59`);
+    return !Number.isNaN(until.getTime()) && until >= startOfToday;
+  }).length;
+  const alertCount = (backend.dashboard?.alerts?.length ?? 0) + reservationAlertCount;
 
   if (authChecking) return <div className="grid min-h-screen place-items-center bg-background"><div className="flex items-center gap-2 text-sm text-muted-foreground"><RefreshCw className="h-4 w-4 animate-spin"/>Carregando...</div></div>;
   if (!user) return <LoginPage onLoggedIn={(u) => {
