@@ -1623,7 +1623,6 @@ function ProposalCreateModal({
   announce: (message: string) => void;
 }) {
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
   const [recipientMode, setRecipientMode] = useState<"client" | "contact">("contact");
   const [clientId, setClientId] = useState("");
@@ -2071,6 +2070,7 @@ function EntityModal({
   role: AuthUser["role"];
 }) {
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
   const kind = state.kind;
   const editingInventory = state.inventoryItem;
