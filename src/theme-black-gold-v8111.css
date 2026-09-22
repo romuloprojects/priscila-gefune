@@ -53,11 +53,17 @@ body {
   --peach: #241a10;
   --surface: #12100d;
   --avatar: #ead5af;
-  --overlay: rgba(0,0,0,.72);
-  --shadow-soft: 0 8px 24px rgba(0,0,0,.28);
-  --shadow-elevated: 0 18px 50px rgba(0,0,0,.48);
-  --shadow-button: 0 6px 16px rgba(185,137,66,.24);
-  --hero-wash: linear-gradient(90deg,rgba(13,12,10,.98) 0%,rgba(13,12,10,.93) 47%,rgba(13,12,10,.42) 72%,rgba(13,12,10,.16) 100%);
+  --overlay: rgba(0, 0, 0, 0.72);
+  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.28);
+  --shadow-elevated: 0 18px 50px rgba(0, 0, 0, 0.48);
+  --shadow-button: 0 6px 16px rgba(185, 137, 66, 0.24);
+  --hero-wash: linear-gradient(
+    90deg,
+    rgba(13, 12, 10, 0.98) 0%,
+    rgba(13, 12, 10, 0.93) 47%,
+    rgba(13, 12, 10, 0.42) 72%,
+    rgba(13, 12, 10, 0.16) 100%
+  );
   min-height: 100vh;
   background: var(--background) !important;
   color: var(--foreground) !important;
@@ -67,68 +73,160 @@ body {
 /* Explicit utility overrides.
  * They intentionally do not depend on Tailwind resolving @theme during build.
  */
-.apg-theme-black-gold .bg-background { background-color: #0d0c0a !important; }
-.apg-theme-black-gold .bg-card { background-color: #15130f !important; }
-.apg-theme-black-gold .bg-card\/95 { background-color: rgba(21,19,15,.95) !important; }
-.apg-theme-black-gold .bg-surface { background-color: #12100d !important; }
-.apg-theme-black-gold .bg-surface\/95 { background-color: rgba(18,16,13,.95) !important; }
-.apg-theme-black-gold .bg-sidebar { background-color: #0a0908 !important; }
-.apg-theme-black-gold .bg-popover { background-color: #171410 !important; }
-.apg-theme-black-gold .bg-muted { background-color: #201c16 !important; }
-.apg-theme-black-gold .bg-muted\/25 { background-color: rgba(32,28,22,.25) !important; }
-.apg-theme-black-gold .bg-muted\/35 { background-color: rgba(32,28,22,.35) !important; }
-.apg-theme-black-gold .bg-muted\/45 { background-color: rgba(32,28,22,.45) !important; }
-.apg-theme-black-gold .bg-secondary { background-color: #201c16 !important; }
-.apg-theme-black-gold .bg-peach { background-color: #241a10 !important; }
-.apg-theme-black-gold .bg-sand { background-color: #2a2115 !important; }
-.apg-theme-black-gold .bg-sand\/70 { background-color: rgba(42,33,21,.70) !important; }
-.apg-theme-black-gold .bg-sage { background-color: #17271d !important; }
-.apg-theme-black-gold .bg-blush { background-color: #311b19 !important; }
-.apg-theme-black-gold .bg-avatar { background-color: #ead5af !important; }
-.apg-theme-black-gold .bg-overlay { background-color: rgba(0,0,0,.72) !important; }
-.apg-theme-black-gold .bg-border { background-color: #3a3024 !important; }
-.apg-theme-black-gold .bg-foreground { background-color: #eee6da !important; }
-.apg-theme-black-gold .bg-danger { background-color: #df7d72 !important; }
+.apg-theme-black-gold .bg-background {
+  background-color: #0d0c0a !important;
+}
+.apg-theme-black-gold .bg-card {
+  background-color: #15130f !important;
+}
+.apg-theme-black-gold .bg-card\/95 {
+  background-color: rgba(21, 19, 15, 0.95) !important;
+}
+.apg-theme-black-gold .bg-surface {
+  background-color: #12100d !important;
+}
+.apg-theme-black-gold .bg-surface\/95 {
+  background-color: rgba(18, 16, 13, 0.95) !important;
+}
+.apg-theme-black-gold .bg-sidebar {
+  background-color: #0a0908 !important;
+}
+.apg-theme-black-gold .bg-popover {
+  background-color: #171410 !important;
+}
+.apg-theme-black-gold .bg-muted {
+  background-color: #201c16 !important;
+}
+.apg-theme-black-gold .bg-muted\/25 {
+  background-color: rgba(32, 28, 22, 0.25) !important;
+}
+.apg-theme-black-gold .bg-muted\/35 {
+  background-color: rgba(32, 28, 22, 0.35) !important;
+}
+.apg-theme-black-gold .bg-muted\/45 {
+  background-color: rgba(32, 28, 22, 0.45) !important;
+}
+.apg-theme-black-gold .bg-secondary {
+  background-color: #201c16 !important;
+}
+.apg-theme-black-gold .bg-peach {
+  background-color: #241a10 !important;
+}
+.apg-theme-black-gold .bg-sand {
+  background-color: #2a2115 !important;
+}
+.apg-theme-black-gold .bg-sand\/70 {
+  background-color: rgba(42, 33, 21, 0.7) !important;
+}
+.apg-theme-black-gold .bg-sage {
+  background-color: #17271d !important;
+}
+.apg-theme-black-gold .bg-blush {
+  background-color: #311b19 !important;
+}
+.apg-theme-black-gold .bg-avatar {
+  background-color: #ead5af !important;
+}
+.apg-theme-black-gold .bg-overlay {
+  background-color: rgba(0, 0, 0, 0.72) !important;
+}
+.apg-theme-black-gold .bg-border {
+  background-color: #3a3024 !important;
+}
+.apg-theme-black-gold .bg-foreground {
+  background-color: #eee6da !important;
+}
+.apg-theme-black-gold .bg-danger {
+  background-color: #df7d72 !important;
+}
 .apg-theme-black-gold .bg-primary {
-  background: linear-gradient(180deg,#e2bf7a,#b88942) !important;
+  background: linear-gradient(180deg, #e2bf7a, #b88942) !important;
   color: #17110a !important;
   border-color: #c29d58 !important;
 }
-.apg-theme-black-gold .bg-primary\/20 { background-color: rgba(212,176,106,.20) !important; }
+.apg-theme-black-gold .bg-primary\/20 {
+  background-color: rgba(212, 176, 106, 0.2) !important;
+}
 
-.apg-theme-black-gold .text-foreground { color: #eee6da !important; }
-.apg-theme-black-gold .text-muted-foreground { color: #aaa094 !important; }
-.apg-theme-black-gold .text-card-foreground { color: #eee6da !important; }
-.apg-theme-black-gold .text-popover-foreground { color: #eee6da !important; }
-.apg-theme-black-gold .text-sidebar-foreground { color: #d7cfc4 !important; }
+.apg-theme-black-gold .text-foreground {
+  color: #eee6da !important;
+}
+.apg-theme-black-gold .text-muted-foreground {
+  color: #aaa094 !important;
+}
+.apg-theme-black-gold .text-card-foreground {
+  color: #eee6da !important;
+}
+.apg-theme-black-gold .text-popover-foreground {
+  color: #eee6da !important;
+}
+.apg-theme-black-gold .text-sidebar-foreground {
+  color: #d7cfc4 !important;
+}
 .apg-theme-black-gold .text-brand,
 .apg-theme-black-gold .text-brand\/80,
-.apg-theme-black-gold .text-primary { color: #d4b06a !important; }
-.apg-theme-black-gold .text-primary-foreground { color: #17110a !important; }
-.apg-theme-black-gold .text-success { color: #93c39c !important; }
-.apg-theme-black-gold .text-danger { color: #df7d72 !important; }
-
-.apg-theme-black-gold .border-border { border-color: #3a3024 !important; }
-.apg-theme-black-gold .border-input { border-color: #493b2b !important; }
-.apg-theme-black-gold .border-brand\/15 { border-color: rgba(212,176,106,.15) !important; }
-.apg-theme-black-gold .border-danger\/20 { border-color: rgba(223,125,114,.20) !important; }
-.apg-theme-black-gold .border-danger\/30 { border-color: rgba(223,125,114,.30) !important; }
-.apg-theme-black-gold .border-primary\/50 { border-color: rgba(212,176,106,.50) !important; }
-
-.apg-theme-black-gold .ring-offset-background { --tw-ring-offset-color: #0d0c0a !important; }
-.apg-theme-black-gold .focus\:ring-ring:focus,
-.apg-theme-black-gold .focus-visible\:ring-ring:focus-visible { --tw-ring-color: #d4b06a !important; }
-
-.apg-theme-black-gold .bg-hero-wash { background: var(--hero-wash) !important; }
-
-.apg-theme-black-gold .hover\:bg-muted:hover { background-color: #201c16 !important; }
-.apg-theme-black-gold .hover\:bg-muted\/45:hover { background-color: rgba(32,28,22,.45) !important; }
-.apg-theme-black-gold .hover\:bg-accent:hover { background-color: #2a2115 !important; }
-.apg-theme-black-gold .hover\:bg-blush:hover { background-color: #311b19 !important; }
-.apg-theme-black-gold .hover\:bg-primary\/90:hover {
-  background: linear-gradient(180deg,#edcf8e,#c49349) !important;
+.apg-theme-black-gold .text-primary {
+  color: #d4b06a !important;
 }
-.apg-theme-black-gold .hover\:text-brand:hover { color: #edcf8e !important; }
+.apg-theme-black-gold .text-primary-foreground {
+  color: #17110a !important;
+}
+.apg-theme-black-gold .text-success {
+  color: #93c39c !important;
+}
+.apg-theme-black-gold .text-danger {
+  color: #df7d72 !important;
+}
+
+.apg-theme-black-gold .border-border {
+  border-color: #3a3024 !important;
+}
+.apg-theme-black-gold .border-input {
+  border-color: #493b2b !important;
+}
+.apg-theme-black-gold .border-brand\/15 {
+  border-color: rgba(212, 176, 106, 0.15) !important;
+}
+.apg-theme-black-gold .border-danger\/20 {
+  border-color: rgba(223, 125, 114, 0.2) !important;
+}
+.apg-theme-black-gold .border-danger\/30 {
+  border-color: rgba(223, 125, 114, 0.3) !important;
+}
+.apg-theme-black-gold .border-primary\/50 {
+  border-color: rgba(212, 176, 106, 0.5) !important;
+}
+
+.apg-theme-black-gold .ring-offset-background {
+  --tw-ring-offset-color: #0d0c0a !important;
+}
+.apg-theme-black-gold .focus\:ring-ring:focus,
+.apg-theme-black-gold .focus-visible\:ring-ring:focus-visible {
+  --tw-ring-color: #d4b06a !important;
+}
+
+.apg-theme-black-gold .bg-hero-wash {
+  background: var(--hero-wash) !important;
+}
+
+.apg-theme-black-gold .hover\:bg-muted:hover {
+  background-color: #201c16 !important;
+}
+.apg-theme-black-gold .hover\:bg-muted\/45:hover {
+  background-color: rgba(32, 28, 22, 0.45) !important;
+}
+.apg-theme-black-gold .hover\:bg-accent:hover {
+  background-color: #2a2115 !important;
+}
+.apg-theme-black-gold .hover\:bg-blush:hover {
+  background-color: #311b19 !important;
+}
+.apg-theme-black-gold .hover\:bg-primary\/90:hover {
+  background: linear-gradient(180deg, #edcf8e, #c49349) !important;
+}
+.apg-theme-black-gold .hover\:text-brand:hover {
+  color: #edcf8e !important;
+}
 
 /* Inputs, selects and textareas need an explicit dark surface in production. */
 .apg-theme-black-gold input,
@@ -147,7 +245,7 @@ body {
 
 /* Header/sidebar and cards: extra specificity for the exact V8.10/V8.11 shell. */
 .apg-theme-black-gold header {
-  background-color: rgba(18,16,13,.95) !important;
+  background-color: rgba(18, 16, 13, 0.95) !important;
   border-color: #3a3024 !important;
 }
 .apg-theme-black-gold aside {
@@ -170,13 +268,15 @@ body {
   border-color: #3a3024 !important;
   color: #eee6da !important;
 }
-.apg-theme-black-gold .meeting-modal-overlay { background: rgba(0,0,0,.72) !important; }
+.apg-theme-black-gold .meeting-modal-overlay {
+  background: rgba(0, 0, 0, 0.72) !important;
+}
 .apg-theme-black-gold .meeting-modal-header {
   background: #241a10 !important;
   border-color: #3a3024 !important;
 }
 .apg-theme-black-gold .meeting-modal-footer {
-  background: rgba(21,19,15,.96) !important;
+  background: rgba(21, 19, 15, 0.96) !important;
   border-color: #3a3024 !important;
 }
 .apg-theme-black-gold .meeting-modal-close,
@@ -198,7 +298,7 @@ body {
   color: #aaa094 !important;
 }
 .apg-theme-black-gold .meeting-save {
-  background: linear-gradient(180deg,#e2bf7a,#b88942) !important;
+  background: linear-gradient(180deg, #e2bf7a, #b88942) !important;
   border-color: #c29d58 !important;
   color: #17110a !important;
 }
@@ -215,7 +315,9 @@ body {
  * evitando depender de um novo asset CSS ou de um novo namespace.
  */
 .apg-login-v84,
-.apg-login-v84 * { box-sizing: border-box; }
+.apg-login-v84 * {
+  box-sizing: border-box;
+}
 
 .apg-login-v84 {
   background: #0d0c0a !important;
@@ -223,58 +325,79 @@ body {
 }
 .apg-login-v84-hero {
   background: #21180f !important;
-  border-right-color: rgba(212,176,106,.26) !important;
+  border-right-color: rgba(212, 176, 106, 0.26) !important;
 }
 .apg-login-v84-hero::after {
-  background: linear-gradient(90deg, transparent, rgba(13,12,10,.36)) !important;
+  background: linear-gradient(90deg, transparent, rgba(13, 12, 10, 0.36)) !important;
 }
 .apg-login-v84-panel {
   background:
-    radial-gradient(circle at 100% 0%, rgba(196,151,77,.11), transparent 27rem),
-    radial-gradient(circle at 0% 100%, rgba(196,151,77,.07), transparent 24rem),
-    #0d0c0a !important;
+    radial-gradient(circle at 100% 0%, rgba(196, 151, 77, 0.11), transparent 27rem),
+    radial-gradient(circle at 0% 100%, rgba(196, 151, 77, 0.07), transparent 24rem), #0d0c0a !important;
 }
 .apg-login-v84-frame {
-  border-color: rgba(208,176,109,.40) !important;
+  border-color: rgba(208, 176, 109, 0.4) !important;
 }
 .apg-login-v84-eyebrow,
 .apg-login-v84-brand,
-.apg-login-v84-divider { color: #d4b06a !important; }
-.apg-login-v84-divider span { background: #9b7c49 !important; }
-.apg-login-v84-head h1 { color: #f4eadc !important; }
-.apg-login-v84-head > p:last-child { color: #aaa094 !important; }
-.apg-login-v84-fields label > span { color: #eee6da !important; }
-.apg-login-v84-input > svg { color: #d4b06a !important; }
+.apg-login-v84-divider {
+  color: #d4b06a !important;
+}
+.apg-login-v84-divider span {
+  background: #9b7c49 !important;
+}
+.apg-login-v84-head h1 {
+  color: #f4eadc !important;
+}
+.apg-login-v84-head > p:last-child {
+  color: #aaa094 !important;
+}
+.apg-login-v84-fields label > span {
+  color: #eee6da !important;
+}
+.apg-login-v84-input > svg {
+  color: #d4b06a !important;
+}
 .apg-login-v84-input input {
   border-color: #493b2b !important;
   background: #13110e !important;
   color: #eee6da !important;
 }
-.apg-login-v84-input input::placeholder { color: #887f74 !important; }
+.apg-login-v84-input input::placeholder {
+  color: #887f74 !important;
+}
 .apg-login-v84-input input:focus {
   border-color: #d4b06a !important;
   background: #171410 !important;
-  box-shadow: 0 0 0 3px rgba(212,176,106,.14) !important;
+  box-shadow: 0 0 0 3px rgba(212, 176, 106, 0.14) !important;
 }
 .apg-login-v84-eye {
   background: transparent !important;
   color: #b4a58f !important;
 }
-.apg-login-v84-eye:hover { background: rgba(212,176,106,.09) !important; }
+.apg-login-v84-eye:hover {
+  background: rgba(212, 176, 106, 0.09) !important;
+}
 .apg-login-v84-error {
   border-color: #6f302b !important;
   background: #2b1715 !important;
   color: #df7d72 !important;
 }
 .apg-login-v84-submit {
-  background: linear-gradient(180deg,#e2bf7a,#b88942) !important;
+  background: linear-gradient(180deg, #e2bf7a, #b88942) !important;
   color: #17110a !important;
-  box-shadow: 0 10px 28px rgba(185,137,66,.24) !important;
+  box-shadow: 0 10px 28px rgba(185, 137, 66, 0.24) !important;
   margin-top: 30px !important;
 }
 .apg-login-v84-submit:hover {
-  background: linear-gradient(180deg,#edcf8e,#c49349) !important;
+  background: linear-gradient(180deg, #edcf8e, #c49349) !important;
 }
-.apg-login-v84-foot { color: #8f8477 !important; }
-.apg-login-v84-foot span { background: #4a3a29 !important; }
-.apg-login-v84-foot svg { color: #b88942 !important; }
+.apg-login-v84-foot {
+  color: #8f8477 !important;
+}
+.apg-login-v84-foot span {
+  background: #4a3a29 !important;
+}
+.apg-login-v84-foot svg {
+  color: #b88942 !important;
+}

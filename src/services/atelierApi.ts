@@ -1,3 +1,9 @@
+export type PaymentTerms = {
+  methods?: string[];
+  installments_card?: number | null;
+  notes?: string;
+  [key: string]: unknown;
+};
 const API_BASE = "/api/atelier";
 
 export type ApiFailure = {
@@ -8,7 +14,7 @@ export type ApiFailure = {
 };
 
 export class AtelierApiError extends Error {
-  code?: string;
+  code: string | undefined;
   payload?: unknown;
 
   constructor(message: string, code?: string, payload?: unknown) {
@@ -34,7 +40,7 @@ async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> 
   });
 
   const text = await response.text();
-  let payload: any = null;
+  let payload: unknown = null;
   try {
     payload = text ? JSON.parse(text) : null;
   } catch {
@@ -45,10 +51,14 @@ async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> 
     );
   }
 
-  if (!response.ok || payload?.ok === false) {
+  const failure =
+    payload && typeof payload === "object" ? (payload as Record<string, unknown>) : {};
+  if (!response.ok || failure["ok"] === false) {
     throw new AtelierApiError(
-      payload?.message || `Falha na API (${response.status}).`,
-      payload?.code,
+      typeof failure["message"] === "string"
+        ? failure["message"]
+        : `Falha na API (${response.status}).`,
+      typeof failure["code"] === "string" ? failure["code"] : undefined,
       payload,
     );
   }
@@ -184,7 +194,6 @@ export type PackageItem = {
   event_type: string | null;
 };
 
-
 export type PackageDetailResponse = {
   ok: true;
   data: PackageItem & { intro_text?: string | null; closing_text?: string | null };
@@ -247,7 +256,6 @@ export type EventItemsResponse = {
   }>;
 };
 
-
 export type EventDetailResponse = {
   ok: true;
   data: Omit<EventRecord, "event_type" | "client_name"> & {
@@ -288,7 +296,7 @@ export type ProposalDetail = {
     valid_until: string | null;
     intro_text: string | null;
     closing_text: string | null;
-    payment_terms: Record<string, unknown>;
+    payment_terms: PaymentTerms;
     notes: string | null;
     event_id: string | null;
     client_id: string | null;
@@ -302,7 +310,7 @@ export type ProposalDetail = {
     reception_venue_snapshot: string | null;
   };
   client: Client | null;
-  event: Record<string, any> | null;
+  event: Partial<EventRecord> | null;
   package: { id: string; name: string } | null;
   sections: Array<{
     id: string;
@@ -338,8 +346,13 @@ export type ProposalDetail = {
   }>;
 };
 
-
-export type AuthUser = { id: string; name: string; username: string; email: string | null; role: "admin" | "inventory" };
+export type AuthUser = {
+  id: string;
+  name: string;
+  username: string;
+  email: string | null;
+  role: "admin" | "inventory";
+};
 
 export type Meeting = {
   id: string;
@@ -371,38 +384,58 @@ export type CompanySettings = {
   proposal_valid_days: number;
   intro_text: string | null;
   closing_text: string | null;
-  payment_terms: Record<string, unknown>;
+  payment_terms: PaymentTerms;
   updated_at: string;
 };
 
 export const atelierApi = {
   auth: {
-    session: () => requestJson<{ ok: true; authenticated: true; user: AuthUser; expires_at: string }>("/auth/session"),
+    session: () =>
+      requestJson<{ ok: true; authenticated: true; user: AuthUser; expires_at: string }>(
+        "/auth/session",
+      ),
     login: (username: string, password: string, remember: boolean) =>
-      requestJson<{ ok: true; authenticated: true; user: AuthUser }>("/auth/login", { method: "POST", body: JSON.stringify({ username, password, remember }) }),
-    logout: () => requestJson<{ ok: true }>("/auth/logout", { method: "POST", body: JSON.stringify({}) }),
+      requestJson<{ ok: true; authenticated: true; user: AuthUser }>("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ username, password, remember }),
+      }),
+    logout: () =>
+      requestJson<{ ok: true }>("/auth/logout", { method: "POST", body: JSON.stringify({}) }),
   },
 
   meetings: {
     list: (search = "") => requestJson<{ ok: true; data: Meeting[] }>(`/meetings${qs({ search })}`),
-    detail: (id: string) => requestJson<{ ok: true; data: Meeting }>(`/meeting-detail${qs({ id })}`),
-    create: (body: Record<string, unknown>) => requestJson<{ ok: true; data: Meeting }>("/meetings", { method: "POST", body: JSON.stringify(body) }),
-    update: (id: string, body: Record<string, unknown>) => requestJson<{ ok: true; data: Meeting }>("/meeting-update", { method: "PATCH", body: JSON.stringify({ ...body, id }) }),
-    delete: (id: string) => requestJson<{ ok: true; deleted_id: string }>(`/meeting-delete${qs({ id })}`, { method: "DELETE" }),
-    sendEmail: (id: string) => requestJson<{ ok: true; email_sent: boolean; email_last_error?: string | null }>("/meeting-email", { method: "POST", body: JSON.stringify({ id }) }),
+    detail: (id: string) =>
+      requestJson<{ ok: true; data: Meeting }>(`/meeting-detail${qs({ id })}`),
+    create: (body: Record<string, unknown>) =>
+      requestJson<{ ok: true; data: Meeting }>("/meetings", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    update: (id: string, body: Record<string, unknown>) =>
+      requestJson<{ ok: true; data: Meeting }>("/meeting-update", {
+        method: "PATCH",
+        body: JSON.stringify({ ...body, id }),
+      }),
+    delete: (id: string) =>
+      requestJson<{ ok: true; deleted_id: string }>(`/meeting-delete${qs({ id })}`, {
+        method: "DELETE",
+      }),
+    sendEmail: (id: string) =>
+      requestJson<{ ok: true; email_sent: boolean; email_last_error?: string | null }>(
+        "/meeting-email",
+        { method: "POST", body: JSON.stringify({ id }) },
+      ),
     pdfUrl: (id: string) => `${API_BASE}/meeting-pdf${qs({ id })}`,
   },
 
-  health: () =>
-    requestJson<{ ok: true; postgres: unknown; gotenberg: unknown }>("/health"),
+  health: () => requestJson<{ ok: true; postgres: unknown; gotenberg: unknown }>("/health"),
 
   dashboard: () => requestJson<DashboardOverview>("/dashboard/overview"),
 
   clients: {
     list: (search = "") =>
-      requestJson<{ ok: true; data: Client[]; total: number }>(
-        `/clients${qs({ search })}`,
-      ),
+      requestJson<{ ok: true; data: Client[]; total: number }>(`/clients${qs({ search })}`),
     create: (body: Record<string, unknown>) =>
       requestJson<{ ok: true; data: Client }>("/clients", {
         method: "POST",
@@ -414,16 +447,17 @@ export const atelierApi = {
         body: JSON.stringify({ ...body, id }),
       }),
     delete: (id: string) =>
-      requestJson<{ ok: true; deleted_id: string; events: number; proposals: number }>(`/client-delete${qs({ id })}`, {
-        method: "DELETE",
-      }),
+      requestJson<{ ok: true; deleted_id: string; events: number; proposals: number }>(
+        `/client-delete${qs({ id })}`,
+        {
+          method: "DELETE",
+        },
+      ),
   },
 
   events: {
     list: (search = "") =>
-      requestJson<{ ok: true; data: EventRecord[] }>(
-        `/events${qs({ search })}`,
-      ),
+      requestJson<{ ok: true; data: EventRecord[] }>(`/events${qs({ search })}`),
     create: (body: Record<string, unknown>) =>
       requestJson<{ ok: true; data: EventRecord }>("/events", {
         method: "POST",
@@ -436,9 +470,12 @@ export const atelierApi = {
         body: JSON.stringify({ ...body, id }),
       }),
     delete: (id: string) =>
-      requestJson<{ ok: true; deleted_id: string; title: string; detached_proposals: number }>(`/event-delete${qs({ id })}`, {
-        method: "DELETE",
-      }),
+      requestJson<{ ok: true; deleted_id: string; title: string; detached_proposals: number }>(
+        `/event-delete${qs({ id })}`,
+        {
+          method: "DELETE",
+        },
+      ),
     items: (id: string) => requestJson<EventItemsResponse>(`/event-items${qs({ event_id: id })}`),
     saveItems: (id: string, items: Array<{ inventory_item_id: string; quantity: number }>) =>
       requestJson<{ ok: true; event_id: string; items: unknown[] }>("/event-items", {
@@ -449,9 +486,7 @@ export const atelierApi = {
 
   inventory: {
     list: (search = "") =>
-      requestJson<{ ok: true; data: InventoryItem[] }>(
-        `/inventory${qs({ search })}`,
-      ),
+      requestJson<{ ok: true; data: InventoryItem[] }>(`/inventory${qs({ search })}`),
     availability: (from: string, until: string, excludeEventId?: string) =>
       requestJson<{ ok: true; from: string; until: string; data: AvailabilityItem[] }>(
         `/inventory/availability${qs({
@@ -493,9 +528,7 @@ export const atelierApi = {
 
   proposals: {
     list: (status?: string, search?: string) =>
-      requestJson<{ ok: true; data: Proposal[] }>(
-        `/proposals${qs({ status, search })}`,
-      ),
+      requestJson<{ ok: true; data: Proposal[] }>(`/proposals${qs({ status, search })}`),
     detail: (id: string) => requestJson<ProposalDetail>(`/proposal-detail${qs({ id })}`),
     create: (body: Record<string, unknown>) =>
       requestJson<ProposalDetail>("/proposals", {

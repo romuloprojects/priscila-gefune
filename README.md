@@ -1,47 +1,33 @@
-# Atelier Priscila Gefune — Gestão de Eventos
+# Atelier Priscila Gefune — Frontend de produção V9
 
-Frontend TanStack Start integrado ao backend real do Atelier Priscila Gefune.
+Código-fonte do frontend com as seis abas e a identidade visual aprovada: fotos da Priscila, preto e dourado luminoso, navegação responsiva e ícones interativos.
 
-## Backend
+## Instalação e build
 
-O navegador chama rotas same-origin em `/api/atelier/*`. O `src/server.ts` encaminha essas requisições para os webhooks de produção do n8n.
+Use Node.js 22.12+ ou 24 LTS e npm. Verificado neste ambiente com Node 24.15.0.
 
-URL padrão:
+```sh
+npm ci
+npm run check
+npm run build
+```
 
-`https://n8n.facilities-ai.com.br/webhook/atelier`
+Configure `N8N_WEBHOOK_BASE_URL` no ambiente do servidor conforme `.env.example`. Mantenha os valores de ambiente e o domínio da instalação atual. O navegador continua usando `/api/atelier/*`; os webhooks e os IDs por query/body foram preservados. O endereço n8n existente continua como fallback, sem credenciais embutidas.
 
-Para usar a rede Docker interna, configure no container do frontend:
+## Publicação
 
-`N8N_WEBHOOK_BASE_URL=http://n8n:5678/webhook/atelier`
+Este ZIP contém o projeto de produção completo, não a prévia HTML. Substitua o código-fonte no processo de implantação atual e faça um novo build. Não substitua apenas o HTML de um servidor estático: a autenticação e o proxy dependem do servidor TanStack Start.
 
-A URL pública permanece como fallback caso a variável não esteja definida.
+A configuração original de build foi mantida. Neste ambiente ela gera Nitro com preset `cloudflare-module`, com servidor em `.output/server` e arquivos públicos em `.output/public`. Use a integração Cloudflare/Workers do provedor atual para publicar esse resultado. Se a hospedagem atual for Docker/Node, confirme e configure o preset Nitro adequado à hospedagem antes de publicar; o resultado Cloudflare não é um servidor Node autônomo.
 
-## Dados reais
+Antes da troca, mantenha uma cópia da versão atual e das variáveis de ambiente. Após publicar, valide login, consulta do estoque, uma edição controlada, uma proposta, PDF e relatório de reunião no seu backend. Não há migração de banco nem workflow n8n neste pacote. O rollback consiste em republicar a versão anterior.
 
-Não há fallback para mocks. Erros de API aparecem na interface para facilitar os testes de integração.
+## Conteúdo
 
-Integrações atuais:
+- `src`: aplicação e proxy autenticado.
+- `tests` e `scripts/test.mjs`: testes de regressão locais, com backend simulado somente durante os testes.
+- `package-lock.json`: dependências fixadas para `npm ci`.
+- `VALIDACAO.md`: correções, resultados e limites dos testes.
+- `INTEGRACAO_N8N.md`: referência de integração herdada.
 
-- Dashboard
-- Clientes
-- Eventos
-- Estoque e disponibilidade de hoje
-- Pacotes
-- Serviços
-- Propostas
-- Preview HTML de proposta
-- PDF via Gotenberg
-- Configurações da empresa
-
-## Observação sobre estoque inicial
-
-O seed do PostgreSQL cadastrou itens e valores observados nos orçamentos fornecidos, mas as quantidades físicas iniciam em zero. Ajuste cada item em **Estoque > Editar item** antes de testar conflitos de reserva.
-
-
-## Atualização V5 - compatibilidade com Webhooks de produção do n8n
-
-As chamadas de detalhe/edição não usam mais segmentos dinâmicos (`:id`) nos Webhooks do n8n. O frontend usa endpoints estáticos e envia IDs por query string ou body. Isso corrige os 404 `requested webhook is not registered` observados no editor de propostas e nos detalhes de eventos.
-
-## Atualização V6 - propostas
-
-A proposta pode usar `Valor final` (padrão) ou `Somar detalhes`. Preços individuais são opcionais e podem permanecer somente como controle interno. A Priscila escolhe se preços de itens e/ou serviços aparecem no PDF.
+Não contém modo de demonstração, dados fictícios no runtime, `node_modules`, segredos ou arquivos de build dependentes da máquina. O build deve ser executado no ambiente de implantação.

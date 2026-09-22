@@ -122,7 +122,12 @@
   --shadow-soft: 0 8px 24px oklch(0.35 0.025 65 / 6%);
   --shadow-elevated: 0 16px 48px oklch(0.3 0.025 65 / 14%);
   --shadow-button: 0 6px 16px oklch(0.4 0.08 70 / 20%);
-  --hero-wash: linear-gradient(90deg, oklch(0.99 0.01 75 / 98%) 0%, oklch(0.99 0.01 75 / 90%) 45%, oklch(0.99 0.01 75 / 16%) 76%);
+  --hero-wash: linear-gradient(
+    90deg,
+    oklch(0.99 0.01 75 / 98%) 0%,
+    oklch(0.99 0.01 75 / 90%) 45%,
+    oklch(0.99 0.01 75 / 16%) 76%
+  );
 }
 
 .dark {
@@ -174,10 +179,18 @@
   }
 }
 
-@utility shadow-soft { box-shadow: var(--shadow-soft); }
-@utility shadow-elevated { box-shadow: var(--shadow-elevated); }
-@utility shadow-button { box-shadow: var(--shadow-button); }
-@utility bg-hero-wash { background: var(--hero-wash); }
+@utility shadow-soft {
+  box-shadow: var(--shadow-soft);
+}
+@utility shadow-elevated {
+  box-shadow: var(--shadow-elevated);
+}
+@utility shadow-button {
+  box-shadow: var(--shadow-button);
+}
+@utility bg-hero-wash {
+  background: var(--hero-wash);
+}
 
 @utility metric-icon {
   display: grid;
@@ -188,9 +201,18 @@
   border-radius: 0.75rem;
 }
 
-@utility tone-sage { background: var(--sage); color: var(--success); }
-@utility tone-sand { background: var(--sand); color: var(--brand); }
-@utility tone-rose { background: var(--blush); color: var(--danger); }
+@utility tone-sage {
+  background: var(--sage);
+  color: var(--success);
+}
+@utility tone-sand {
+  background: var(--sand);
+  color: var(--brand);
+}
+@utility tone-rose {
+  background: var(--blush);
+  color: var(--danger);
+}
 
 @utility botanical-mark {
   position: relative;
@@ -201,141 +223,678 @@
   align-items: flex-end;
   justify-content: center;
   color: color-mix(in oklab, var(--brand) 30%, transparent);
-  & svg { position: absolute; height: 5rem; width: 5rem; stroke-width: 0.8; }
-  & svg:first-child { left: 0.25rem; transform: rotate(-28deg); }
-  & svg:nth-child(2) { bottom: 1.2rem; transform: rotate(2deg); }
-  & svg:last-child { right: 0.25rem; transform: rotate(28deg); }
+  & svg {
+    position: absolute;
+    height: 5rem;
+    width: 5rem;
+    stroke-width: 0.8;
+  }
+  & svg:first-child {
+    left: 0.25rem;
+    transform: rotate(-28deg);
+  }
+  & svg:nth-child(2) {
+    bottom: 1.2rem;
+    transform: rotate(2deg);
+  }
+  & svg:last-child {
+    right: 0.25rem;
+    transform: rotate(28deg);
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  button { transition-duration: 180ms; }
+  button {
+    transition-duration: 180ms;
+  }
 }
 
 @media (max-width: 47.99rem) {
-  .mobile-profile { display: none; }
+  .mobile-profile {
+    display: none;
+  }
 }
 
-
 /* Login homologado + tablet */
-.login-shell { min-height: 100dvh; }
-.login-cover img { object-position: left center; }
-.login-botanical { position:absolute; width:180px; height:240px; opacity:.18; pointer-events:none; background:radial-gradient(ellipse at center, transparent 55%, color-mix(in oklab,var(--brand) 55%,transparent) 56% 57%, transparent 58%); }
-.login-botanical-top { top:-50px; right:-40px; transform:rotate(18deg); }
-.login-botanical-bottom { bottom:-80px; left:-60px; transform:rotate(-24deg); }
+.login-shell {
+  min-height: 100dvh;
+}
+.login-cover img {
+  object-position: left center;
+}
+.login-botanical {
+  position: absolute;
+  width: 180px;
+  height: 240px;
+  opacity: 0.18;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 55%,
+    color-mix(in oklab, var(--brand) 55%, transparent) 56% 57%,
+    transparent 58%
+  );
+}
+.login-botanical-top {
+  top: -50px;
+  right: -40px;
+  transform: rotate(18deg);
+}
+.login-botanical-bottom {
+  bottom: -80px;
+  left: -60px;
+  transform: rotate(-24deg);
+}
 
 @media (min-width: 48rem) and (max-width: 79.99rem) {
-  .metric-icon { width:3rem; height:3rem; }
-  button, input, select, textarea { touch-action: manipulation; }
-  main { max-width:100%; }
+  .metric-icon {
+    width: 3rem;
+    height: 3rem;
+  }
+  button,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+  main {
+    max-width: 100%;
+  }
 }
 
 @media (max-width: 63.99rem) {
-  .mobile-profile { display: none; }
+  .mobile-profile {
+    display: none;
+  }
 }
 
 /* Login V8.2 — implementação baseada no mockup homologado */
 .login-form-pane {
   background:
-    radial-gradient(circle at 100% 0%, rgba(207,173,120,.10), transparent 24rem),
-    radial-gradient(circle at 0% 100%, rgba(207,173,120,.08), transparent 22rem),
-    #fbf7f1;
+    radial-gradient(circle at 100% 0%, rgba(207, 173, 120, 0.1), transparent 24rem),
+    radial-gradient(circle at 0% 100%, rgba(207, 173, 120, 0.08), transparent 22rem), #fbf7f1;
 }
 .login-cover {
   background: #eadcc8;
-  box-shadow: inset -1px 0 0 rgba(183,145,91,.16);
+  box-shadow: inset -1px 0 0 rgba(183, 145, 91, 0.16);
 }
-.login-cover img { object-position: center center; }
-.login-gold-frame { pointer-events: none; }
+.login-cover img {
+  object-position: center center;
+}
+.login-gold-frame {
+  pointer-events: none;
+}
 @media (min-width: 1024px) and (max-width: 1279px) {
-  .login-layout { grid-template-columns: 1.04fr .96fr; }
+  .login-layout {
+    grid-template-columns: 1.04fr 0.96fr;
+  }
 }
 @media (max-width: 1023px) {
   .login-form-pane::before {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(255,250,243,.96), rgba(251,247,241,.98));
+    background: linear-gradient(180deg, rgba(255, 250, 243, 0.96), rgba(251, 247, 241, 0.98));
     pointer-events: none;
   }
 }
 
-
 /* V8.3 — Login e Reuniões com CSS estrutural explícito */
-.login-v83 { min-height: 100vh; min-height: 100dvh; background:#fbf7f1; color:#2a211b; }
-.login-v83-layout { min-height:100vh; min-height:100dvh; display:grid; grid-template-columns:1fr; }
-.login-v83-cover { display:none; position:relative; min-height:100vh; overflow:hidden; background:#eadcc8; }
-.login-v83-cover img { width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
-.login-v83-pane { position:relative; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:32px 28px; overflow:hidden; background:radial-gradient(circle at 100% 0%,rgba(207,173,120,.12),transparent 26rem),#fbf7f1; }
-.login-v83-frame { position:absolute; inset:4%; border:1px solid rgba(183,145,91,.38); border-radius:28px; pointer-events:none; }
-.login-v83-form { position:relative; z-index:1; width:min(100%,510px); padding:28px 12px; }
-.login-v83-head { text-align:center; }
-.login-v83-eyebrow,.login-v83-brand { margin:0; color:#8f6a3a; text-transform:uppercase; font-weight:600; letter-spacing:.34em; font-size:11px; }
-.login-v83-brand { margin-top:8px; font-size:12px; }
-.login-v83-divider { width:145px; margin:22px auto 30px; display:flex; gap:12px; align-items:center; color:#b98a4b; }
-.login-v83-divider span { height:1px; background:#c9a56d; flex:1; }
-.login-v83-divider b { font-size:18px; font-weight:400; }
-.login-v83-head h1 { margin:0; font-family:"Cormorant Garamond",serif; font-size:clamp(50px,5vw,66px); font-weight:500; line-height:.95; color:#251b15; }
-.login-v83-subtitle { margin:18px 0 0; font-size:17px; color:#6e6258; }
-.login-v83-fields { margin-top:48px; display:grid; gap:24px; }
-.login-v83-fields label>span { display:block; margin-bottom:9px; font-size:16px; font-weight:600; color:#31261f; }
-.login-v83-input-wrap { position:relative; }
-.login-v83-input-wrap>svg { position:absolute; left:18px; top:50%; transform:translateY(-50%); width:20px; height:20px; color:#9d7440; }
-.login-v83-input-wrap input { box-sizing:border-box; width:100%; height:62px; border:1px solid #d8cfc3; border-radius:13px; background:rgba(255,255,255,.72); padding:0 56px; font:inherit; font-size:16px; color:#3d342d; outline:none; }
-.login-v83-input-wrap input:focus { border-color:#b98a4b; box-shadow:0 0 0 3px rgba(185,138,75,.12); }
-.login-v83-eye { position:absolute; right:10px; top:50%; transform:translateY(-50%); width:44px; height:44px; display:grid; place-items:center; border:0; background:transparent; color:#776a60; cursor:pointer; }
-.login-v83-eye svg { width:20px; height:20px; }
-.login-v83-options { margin-top:24px; display:flex; justify-content:space-between; gap:18px; align-items:center; font-size:14px; color:#5c5047; }
-.login-v83-options label { display:flex; align-items:center; gap:9px; cursor:pointer; }
-.login-v83-options input { width:18px; height:18px; accent-color:#9f753b; }
-.login-v83-options button { border:0; background:none; color:#79552f; text-decoration:underline; text-underline-offset:4px; cursor:pointer; }
-.login-v83-error { margin-top:18px; border:1px solid #e9beba; background:#fff0ee; color:#a33b32; padding:12px 14px; border-radius:12px; font-size:14px; }
-.login-v83-submit { margin-top:30px; width:100%; height:64px; border:0; border-radius:12px; display:flex; align-items:center; justify-content:center; gap:14px; background:#a77c40; color:white; font-size:20px; font-weight:600; cursor:pointer; box-shadow:0 10px 28px rgba(126,91,46,.18); }
-.login-v83-submit:hover { background:#946b35; }
-.login-v83-submit:disabled { opacity:.6; cursor:wait; }
-.login-v83-submit svg { width:20px; height:20px; }
-.login-v83-foot { margin-top:34px; display:flex; align-items:center; justify-content:center; gap:10px; color:#87796d; font-size:12px; }
-.login-v83-foot span { width:50px; height:1px; background:#dcc6a4; }
-.login-v83-foot svg { width:15px; height:15px; color:#a77c40; }
-.login-v83-foot em { font-style:normal; text-align:center; }
-@media (min-width:1024px) { .login-v83-layout{grid-template-columns:minmax(0,1.18fr) minmax(480px,.82fr)} .login-v83-cover{display:block} }
-@media (min-width:1024px) and (max-width:1279px) { .login-v83-layout{grid-template-columns:1.03fr .97fr} .login-v83-pane{padding-left:34px;padding-right:34px} }
-@media (max-width:639px) { .login-v83-pane{padding:20px} .login-v83-frame{inset:14px;border-radius:20px} .login-v83-form{padding:24px 8px} .login-v83-options{align-items:flex-start;flex-direction:column} .login-v83-foot span{width:24px} }
+.login-v83 {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #fbf7f1;
+  color: #2a211b;
+}
+.login-v83-layout {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: 1fr;
+}
+.login-v83-cover {
+  display: none;
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #eadcc8;
+}
+.login-v83-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+.login-v83-pane {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 28px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(207, 173, 120, 0.12), transparent 26rem), #fbf7f1;
+}
+.login-v83-frame {
+  position: absolute;
+  inset: 4%;
+  border: 1px solid rgba(183, 145, 91, 0.38);
+  border-radius: 28px;
+  pointer-events: none;
+}
+.login-v83-form {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 510px);
+  padding: 28px 12px;
+}
+.login-v83-head {
+  text-align: center;
+}
+.login-v83-eyebrow,
+.login-v83-brand {
+  margin: 0;
+  color: #8f6a3a;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.34em;
+  font-size: 11px;
+}
+.login-v83-brand {
+  margin-top: 8px;
+  font-size: 12px;
+}
+.login-v83-divider {
+  width: 145px;
+  margin: 22px auto 30px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  color: #b98a4b;
+}
+.login-v83-divider span {
+  height: 1px;
+  background: #c9a56d;
+  flex: 1;
+}
+.login-v83-divider b {
+  font-size: 18px;
+  font-weight: 400;
+}
+.login-v83-head h1 {
+  margin: 0;
+  font-family: "Cormorant Garamond", serif;
+  font-size: clamp(50px, 5vw, 66px);
+  font-weight: 500;
+  line-height: 0.95;
+  color: #251b15;
+}
+.login-v83-subtitle {
+  margin: 18px 0 0;
+  font-size: 17px;
+  color: #6e6258;
+}
+.login-v83-fields {
+  margin-top: 48px;
+  display: grid;
+  gap: 24px;
+}
+.login-v83-fields label > span {
+  display: block;
+  margin-bottom: 9px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #31261f;
+}
+.login-v83-input-wrap {
+  position: relative;
+}
+.login-v83-input-wrap > svg {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  color: #9d7440;
+}
+.login-v83-input-wrap input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 62px;
+  border: 1px solid #d8cfc3;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 0 56px;
+  font: inherit;
+  font-size: 16px;
+  color: #3d342d;
+  outline: none;
+}
+.login-v83-input-wrap input:focus {
+  border-color: #b98a4b;
+  box-shadow: 0 0 0 3px rgba(185, 138, 75, 0.12);
+}
+.login-v83-eye {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: #776a60;
+  cursor: pointer;
+}
+.login-v83-eye svg {
+  width: 20px;
+  height: 20px;
+}
+.login-v83-options {
+  margin-top: 24px;
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  font-size: 14px;
+  color: #5c5047;
+}
+.login-v83-options label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+}
+.login-v83-options input {
+  width: 18px;
+  height: 18px;
+  accent-color: #9f753b;
+}
+.login-v83-options button {
+  border: 0;
+  background: none;
+  color: #79552f;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.login-v83-error {
+  margin-top: 18px;
+  border: 1px solid #e9beba;
+  background: #fff0ee;
+  color: #a33b32;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+.login-v83-submit {
+  margin-top: 30px;
+  width: 100%;
+  height: 64px;
+  border: 0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: #a77c40;
+  color: white;
+  font-size: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 10px 28px rgba(126, 91, 46, 0.18);
+}
+.login-v83-submit:hover {
+  background: #946b35;
+}
+.login-v83-submit:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.login-v83-submit svg {
+  width: 20px;
+  height: 20px;
+}
+.login-v83-foot {
+  margin-top: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #87796d;
+  font-size: 12px;
+}
+.login-v83-foot span {
+  width: 50px;
+  height: 1px;
+  background: #dcc6a4;
+}
+.login-v83-foot svg {
+  width: 15px;
+  height: 15px;
+  color: #a77c40;
+}
+.login-v83-foot em {
+  font-style: normal;
+  text-align: center;
+}
+@media (min-width: 1024px) {
+  .login-v83-layout {
+    grid-template-columns: minmax(0, 1.18fr) minmax(480px, 0.82fr);
+  }
+  .login-v83-cover {
+    display: block;
+  }
+}
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .login-v83-layout {
+    grid-template-columns: 1.03fr 0.97fr;
+  }
+  .login-v83-pane {
+    padding-left: 34px;
+    padding-right: 34px;
+  }
+}
+@media (max-width: 639px) {
+  .login-v83-pane {
+    padding: 20px;
+  }
+  .login-v83-frame {
+    inset: 14px;
+    border-radius: 20px;
+  }
+  .login-v83-form {
+    padding: 24px 8px;
+  }
+  .login-v83-options {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .login-v83-foot span {
+    width: 24px;
+  }
+}
 
-.meeting-email-config { margin-bottom:16px; display:grid; grid-template-columns:minmax(0,1fr); gap:12px; padding:16px; border:1px solid var(--color-border); border-radius:12px; background:var(--color-card); box-shadow:var(--shadow-soft); }
-.meeting-email-config>div p { margin:5px 0 0; max-width:760px; font-size:12px; line-height:1.5; color:var(--color-muted-foreground); }
-.meeting-config-label { font-size:12px; font-weight:700; color:var(--color-foreground); }
-.meeting-email-config input { box-sizing:border-box; width:100%; height:44px; padding:0 12px; border:1px solid var(--color-input); border-radius:8px; background:var(--color-background); font:inherit; }
-@media (min-width:850px) { .meeting-email-config{grid-template-columns:minmax(280px,1fr) minmax(300px,.85fr) auto; align-items:center;} }
+.meeting-email-config {
+  margin-bottom: 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-card);
+  box-shadow: var(--shadow-soft);
+}
+.meeting-email-config > div p {
+  margin: 5px 0 0;
+  max-width: 760px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-muted-foreground);
+}
+.meeting-config-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-foreground);
+}
+.meeting-email-config input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--color-input);
+  border-radius: 8px;
+  background: var(--color-background);
+  font: inherit;
+}
+@media (min-width: 850px) {
+  .meeting-email-config {
+    grid-template-columns: minmax(280px, 1fr) minmax(300px, 0.85fr) auto;
+    align-items: center;
+  }
+}
 
-.meeting-modal-overlay { position:fixed; inset:0; z-index:90; display:flex; align-items:stretch; justify-content:center; padding:0; background:rgba(43,33,27,.42); }
-.meeting-modal { width:100%; height:100dvh; min-height:0; display:grid; grid-template-rows:auto minmax(0,1fr) auto; overflow:hidden; background:var(--color-card); box-shadow:var(--shadow-elevated); }
-.meeting-modal-header { position:relative; z-index:2; min-height:86px; display:flex; align-items:center; justify-content:space-between; gap:20px; padding:18px 22px; border-bottom:1px solid var(--color-border); background:var(--color-peach); }
-.meeting-modal-header p { margin:0 0 5px; font-size:10px; font-weight:700; letter-spacing:.22em; color:var(--color-brand); }
-.meeting-modal-header h2 { margin:0; font-family:"Cormorant Garamond",serif; font-size:34px; line-height:1; font-weight:600; }
-.meeting-modal-close { width:48px; height:48px; flex:0 0 48px; display:grid; place-items:center; border:1px solid rgba(140,111,76,.22); border-radius:999px; background:rgba(255,255,255,.65); color:var(--color-foreground); cursor:pointer; }
-.meeting-modal-close:hover { background:white; }
-.meeting-modal-close svg { width:23px; height:23px; }
-.meeting-modal-scroll { min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:22px; }
-.meeting-fields { display:grid; grid-template-columns:1fr; gap:16px; }
-.meeting-fields label>span { display:block; margin-bottom:6px; font-size:12px; font-weight:700; color:var(--color-muted-foreground); }
-.meeting-fields input,.meeting-fields select { box-sizing:border-box; width:100%; height:48px; border:1px solid var(--color-input); border-radius:9px; background:var(--color-background); padding:0 13px; font:inherit; font-size:14px; outline:none; }
-.meeting-fields input:focus,.meeting-fields select:focus,.meeting-notes-block textarea:focus { border-color:var(--color-ring); box-shadow:0 0 0 3px color-mix(in oklab,var(--color-ring) 15%,transparent); }
-.meeting-notes-block { margin-top:22px; }
-.meeting-notes-head { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:9px; }
-.meeting-notes-head span { display:block; font-size:14px; font-weight:800; color:var(--color-foreground); }
-.meeting-notes-head p { margin:5px 0 0; font-size:12px; line-height:1.45; color:var(--color-muted-foreground); }
-.meeting-notes-head small { white-space:nowrap; font-size:11px; color:var(--color-muted-foreground); }
-.meeting-notes-block textarea { box-sizing:border-box; display:block; width:100%; min-height:430px; resize:vertical; border:1px solid var(--color-input); border-radius:14px; background:var(--color-background); padding:18px; font:inherit; font-size:17px; line-height:1.7; outline:none; }
-.meeting-send-note { margin-top:16px; padding:13px 15px; border-radius:10px; background:color-mix(in oklab,var(--sand) 60%,white); font-size:12px; line-height:1.5; color:var(--color-muted-foreground); }
-.meeting-send-note strong { color:var(--color-foreground); }
-.meeting-error { margin-top:14px; padding:12px 14px; border-radius:10px; background:var(--blush); color:var(--danger); font-size:13px; }
-.meeting-modal-footer { position:relative; z-index:2; display:flex; justify-content:flex-end; gap:10px; padding:14px 22px calc(14px + env(safe-area-inset-bottom)); border-top:1px solid var(--color-border); background:color-mix(in oklab,var(--color-card) 96%,transparent); backdrop-filter:blur(10px); }
-.meeting-cancel,.meeting-save { min-width:132px; height:48px; border-radius:9px; padding:0 18px; font:inherit; font-size:14px; font-weight:700; cursor:pointer; }
-.meeting-cancel { border:1px solid var(--color-border); background:var(--color-card); color:var(--color-foreground); }
-.meeting-save { border:1px solid var(--color-brand); background:var(--color-brand); color:white; }
-.meeting-save:disabled { opacity:.6; cursor:wait; }
-@media (min-width:720px) { .meeting-modal-overlay{align-items:center;padding:22px} .meeting-modal{width:min(1100px,96vw); height:min(900px,94dvh); border-radius:18px} .meeting-fields{grid-template-columns:repeat(2,minmax(0,1fr))} .meeting-span-2{grid-column:1/-1} .meeting-modal-scroll{padding:26px 30px} .meeting-modal-header{padding:18px 30px} .meeting-modal-footer{padding-left:30px;padding-right:30px} }
-@media (min-width:1100px) { .meeting-modal{height:min(920px,92dvh)} .meeting-notes-block textarea{min-height:470px} }
+.meeting-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  padding: 0;
+  background: rgba(43, 33, 27, 0.42);
+}
+.meeting-modal {
+  width: 100%;
+  height: 100dvh;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  background: var(--color-card);
+  box-shadow: var(--shadow-elevated);
+}
+.meeting-modal-header {
+  position: relative;
+  z-index: 2;
+  min-height: 86px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-peach);
+}
+.meeting-modal-header p {
+  margin: 0 0 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--color-brand);
+}
+.meeting-modal-header h2 {
+  margin: 0;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 600;
+}
+.meeting-modal-close {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(140, 111, 76, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.65);
+  color: var(--color-foreground);
+  cursor: pointer;
+}
+.meeting-modal-close:hover {
+  background: white;
+}
+.meeting-modal-close svg {
+  width: 23px;
+  height: 23px;
+}
+.meeting-modal-scroll {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 22px;
+}
+.meeting-fields {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+.meeting-fields label > span {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-muted-foreground);
+}
+.meeting-fields input,
+.meeting-fields select {
+  box-sizing: border-box;
+  width: 100%;
+  height: 48px;
+  border: 1px solid var(--color-input);
+  border-radius: 9px;
+  background: var(--color-background);
+  padding: 0 13px;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+.meeting-fields input:focus,
+.meeting-fields select:focus,
+.meeting-notes-block textarea:focus {
+  border-color: var(--color-ring);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-ring) 15%, transparent);
+}
+.meeting-notes-block {
+  margin-top: 22px;
+}
+.meeting-notes-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 9px;
+}
+.meeting-notes-head span {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-foreground);
+}
+.meeting-notes-head p {
+  margin: 5px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--color-muted-foreground);
+}
+.meeting-notes-head small {
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--color-muted-foreground);
+}
+.meeting-notes-block textarea {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  min-height: 430px;
+  resize: vertical;
+  border: 1px solid var(--color-input);
+  border-radius: 14px;
+  background: var(--color-background);
+  padding: 18px;
+  font: inherit;
+  font-size: 17px;
+  line-height: 1.7;
+  outline: none;
+}
+.meeting-send-note {
+  margin-top: 16px;
+  padding: 13px 15px;
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--sand) 60%, white);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-muted-foreground);
+}
+.meeting-send-note strong {
+  color: var(--color-foreground);
+}
+.meeting-error {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--blush);
+  color: var(--danger);
+  font-size: 13px;
+}
+.meeting-modal-footer {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 22px calc(14px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--color-border);
+  background: color-mix(in oklab, var(--color-card) 96%, transparent);
+  backdrop-filter: blur(10px);
+}
+.meeting-cancel,
+.meeting-save {
+  min-width: 132px;
+  height: 48px;
+  border-radius: 9px;
+  padding: 0 18px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.meeting-cancel {
+  border: 1px solid var(--color-border);
+  background: var(--color-card);
+  color: var(--color-foreground);
+}
+.meeting-save {
+  border: 1px solid var(--color-brand);
+  background: var(--color-brand);
+  color: white;
+}
+.meeting-save:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+@media (min-width: 720px) {
+  .meeting-modal-overlay {
+    align-items: center;
+    padding: 22px;
+  }
+  .meeting-modal {
+    width: min(1100px, 96vw);
+    height: min(900px, 94dvh);
+    border-radius: 18px;
+  }
+  .meeting-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .meeting-span-2 {
+    grid-column: 1/-1;
+  }
+  .meeting-modal-scroll {
+    padding: 26px 30px;
+  }
+  .meeting-modal-header {
+    padding: 18px 30px;
+  }
+  .meeting-modal-footer {
+    padding-left: 30px;
+    padding-right: 30px;
+  }
+}
+@media (min-width: 1100px) {
+  .meeting-modal {
+    height: min(920px, 92dvh);
+  }
+  .meeting-notes-block textarea {
+    min-height: 470px;
+  }
+}
 
 /* V8.11 - TEMA HOMOLOGADO PRETO + DOURADO
  * Baseline visual: homologacao real V3 aprovada em 2026-09-19.
@@ -389,20 +948,39 @@
   --shadow-soft: 0 8px 24px oklch(0 0 0 / 28%);
   --shadow-elevated: 0 18px 50px oklch(0 0 0 / 48%);
   --shadow-button: 0 6px 16px oklch(0.52 0.095 78 / 24%);
-  --hero-wash: linear-gradient(90deg, oklch(0.1547 0.0045 84.57 / 98%) 0%, oklch(0.1547 0.0045 84.57 / 93%) 47%, oklch(0.1547 0.0045 84.57 / 42%) 72%, oklch(0.1547 0.0045 84.57 / 16%) 100%);
+  --hero-wash: linear-gradient(
+    90deg,
+    oklch(0.1547 0.0045 84.57 / 98%) 0%,
+    oklch(0.1547 0.0045 84.57 / 93%) 47%,
+    oklch(0.1547 0.0045 84.57 / 42%) 72%,
+    oklch(0.1547 0.0045 84.57 / 16%) 100%
+  );
 }
 
-html { background: var(--background); }
-body { min-height: 100vh; }
-::selection { background: color-mix(in oklab, var(--brand) 35%, transparent); color: var(--foreground); }
-input[type="checkbox"], input[type="radio"] { accent-color: var(--brand); }
-input::placeholder, textarea::placeholder { color: color-mix(in oklab, var(--muted-foreground) 82%, transparent); }
+html {
+  background: var(--background);
+}
+body {
+  min-height: 100vh;
+}
+::selection {
+  background: color-mix(in oklab, var(--brand) 35%, transparent);
+  color: var(--foreground);
+}
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--brand);
+}
+input::placeholder,
+textarea::placeholder {
+  color: color-mix(in oklab, var(--muted-foreground) 82%, transparent);
+}
 
 /* Sidebar/logo preto+dourado aprovado. */
 aside.bg-sidebar > div:first-child img {
   border-radius: 6px;
   mix-blend-mode: screen;
-  filter: saturate(.92) contrast(1.04);
+  filter: saturate(0.92) contrast(1.04);
 }
 
 /* Primary CTA: acabamento champagne/dourado sem mudar o componente. */
@@ -411,21 +989,46 @@ aside.bg-sidebar > div:first-child img {
   border: 1px solid color-mix(in oklab, var(--brand) 88%, white 12%);
 }
 .hover\:bg-primary\/90:hover {
-  background: linear-gradient(180deg, oklch(0.88 0.09 86), oklch(0.70 0.10 77));
+  background: linear-gradient(180deg, oklch(0.88 0.09 86), oklch(0.7 0.1 77));
 }
 
 /* Superficies internas e tabelas mantem densidade da V8.10 com leitura premium. */
-.bg-card, .bg-surface { backdrop-filter: saturate(1.02); }
-thead { color: var(--muted-foreground); }
-tbody tr { border-color: var(--border); }
+.bg-card,
+.bg-surface {
+  backdrop-filter: saturate(1.02);
+}
+thead {
+  color: var(--muted-foreground);
+}
+tbody tr {
+  border-color: var(--border);
+}
 
 /* Reunioes: remove residuos claros do layout homologado antigo. */
-.meeting-modal-overlay { background: oklch(0 0 0 / 72%); }
-.meeting-modal-header { background: var(--peach); }
-.meeting-modal-close { background: var(--card); border-color: var(--border); color: var(--foreground); }
-.meeting-modal-close:hover { background: var(--muted); }
-.meeting-send-note { background: color-mix(in oklab, var(--sand) 84%, black); }
-.meeting-save { border-color: var(--brand); background: linear-gradient(180deg, oklch(0.8491 0.0994 85.4), oklch(0.6617 0.1052 75.38)); color: oklch(0.1829 0.0167 70.78); }
+.meeting-modal-overlay {
+  background: oklch(0 0 0 / 72%);
+}
+.meeting-modal-header {
+  background: var(--peach);
+}
+.meeting-modal-close {
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--foreground);
+}
+.meeting-modal-close:hover {
+  background: var(--muted);
+}
+.meeting-send-note {
+  background: color-mix(in oklab, var(--sand) 84%, black);
+}
+.meeting-save {
+  border-color: var(--brand);
+  background: linear-gradient(180deg, oklch(0.8491 0.0994 85.4), oklch(0.6617 0.1052 75.38));
+  color: oklch(0.1829 0.0167 70.78);
+}
 
 /* Scrollbars discretas no tema escuro. */
-* { scrollbar-color: color-mix(in oklab, var(--brand) 42%, var(--card)) var(--background); }
+* {
+  scrollbar-color: color-mix(in oklab, var(--brand) 42%, var(--card)) var(--background);
+}
