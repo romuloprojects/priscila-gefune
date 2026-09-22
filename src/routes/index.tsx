@@ -52,7 +52,7 @@ import {
 } from "react";
 
 import floralImage from "../assets/eventos-floral.jpg";
-import priscilaHomeHero from "../assets/priscila-home-hero.jpg";
+import priscilaHomePhoto from "../assets/priscila-home-photo.jpg";
 import priscilaLogo from "../assets/atelier-priscila-gefune-logo-black-gold.jpg";
 import loginVisual from "../assets/login-cover-homologado.png";
 import {
@@ -648,11 +648,11 @@ function HomePage({
     <>
       <section className="relative min-h-[126px] overflow-hidden rounded-lg border border-border bg-surface px-5 py-6 shadow-soft sm:px-7">
         <img
-          src={priscilaHomeHero}
-          width={1920}
-          height={1024}
+          src={priscilaHomePhoto}
+          width={1672}
+          height={941}
           alt="Priscila Gefune em retrato no Atelier"
-          className="absolute inset-0 h-full w-full object-cover object-center"
+          className="absolute inset-0 h-full w-full object-contain object-right"
         />
         <div className="absolute inset-0 bg-hero-wash" />
         <div className="relative z-10 max-w-2xl">
