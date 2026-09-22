@@ -52,6 +52,7 @@ import {
 } from "react";
 
 import floralImage from "../assets/eventos-floral.jpg";
+import priscilaHomeHero from "../assets/priscila-home-hero.jpg";
 import priscilaLogo from "../assets/atelier-priscila-gefune-logo-black-gold.jpg";
 import loginVisual from "../assets/login-cover-homologado.png";
 import {
@@ -537,6 +538,7 @@ function HomePage({
   openModal,
   announce,
   dashboard,
+  events,
   onPreview,
   onPdf,
   meetings,
@@ -548,6 +550,7 @@ function HomePage({
   openModal: (kind: ModalKind) => void;
   announce: (message: string) => void;
   dashboard: DashboardOverview | null;
+  events: EventRecord[];
   onPreview: (id: string) => void;
   onPdf: (id: string) => void;
   meetings: Meeting[];
@@ -555,6 +558,9 @@ function HomePage({
   onOpenPhoto: (src: string, title: string) => void;
 }) {
   const upcoming = dashboard?.upcoming_events ?? [];
+  const eventRecordsById = useMemo(() => new Map(events.map((event) => [event.id, event])), [events]);
+  const [eventItemCounts, setEventItemCounts] = useState<Record<string, number>>({});
+
   const shownEvents = useMemo(() => {
     const q = query.trim().toLocaleLowerCase("pt-BR");
     if (!q) return upcoming.slice(0, 3);
@@ -566,6 +572,40 @@ function HomePage({
       )
       .slice(0, 3);
   }, [query, upcoming]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const needsCount = shownEvents.filter((event) => {
+      const fullEvent = eventRecordsById.get(event.id);
+      return Boolean(fullEvent?.reserve_from && fullEvent?.reserve_until);
+    });
+
+    if (!needsCount.length) {
+      setEventItemCounts({});
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    void Promise.all(
+      needsCount.map(async (event) => {
+        try {
+          const result = await atelierApi.events.items(event.id);
+          return [event.id, result.items.length] as const;
+        } catch {
+          return [event.id, 0] as const;
+        }
+      }),
+    ).then((entries) => {
+      if (cancelled) return;
+      setEventItemCounts(Object.fromEntries(entries));
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [shownEvents, eventRecordsById]);
+
   const formattedDate = new Intl.DateTimeFormat("pt-BR", {
     weekday: "long",
     day: "numeric",
@@ -594,11 +634,11 @@ function HomePage({
     <>
       <section className="relative min-h-[126px] overflow-hidden rounded-lg border border-border bg-surface px-5 py-6 shadow-soft sm:px-7">
         <img
-          src={floralImage}
+          src={priscilaHomeHero}
           width={1920}
           height={1024}
-          alt="Arranjo de rosas e folhagens em tons suaves"
-          className="absolute inset-0 h-full w-full object-cover object-right"
+          alt="Priscila Gefune em retrato no Atelier"
+          className="absolute inset-0 h-full w-full object-cover object-[72%_28%] sm:object-right"
         />
         <div className="absolute inset-0 bg-hero-wash" />
         <div className="relative z-10 max-w-2xl">
@@ -644,6 +684,9 @@ function HomePage({
               shownEvents.map((event) => {
                 const parts = dateParts(event.event_date);
                 const status = eventStatusLabel(event.status);
+                const fullEvent = eventRecordsById.get(event.id);
+                const hasReservedStock = Boolean(fullEvent?.reserve_from && fullEvent?.reserve_until);
+                const reservedItemCount = eventItemCounts[event.id] ?? 0;
                 return (
                   <button
                     key={event.id}
@@ -665,6 +708,25 @@ function HomePage({
                         <MapPin className="h-3.5 w-3.5" />
                         {event.location || "Local ainda não informado"}
                       </p>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px]">
+                        {hasReservedStock ? (
+                          <>
+                            <span className="inline-flex items-center gap-1 rounded-full border border-brand/35 bg-sand/65 px-2 py-0.5 font-medium text-brand">
+                              <PackageCheck className="h-3.5 w-3.5" />
+                              {reservedItemCount > 0
+                                ? `${reservedItemCount} ${reservedItemCount === 1 ? "item reservado" : "itens reservados"}`
+                                : "Acervo reservado"}
+                            </span>
+                            <span className="text-muted-foreground">
+                              {fullEvent?.reserve_from && fullEvent?.reserve_until
+                                ? `${formatDate(fullEvent.reserve_from)} a ${formatDate(fullEvent.reserve_until)}`
+                                : ""}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-muted-foreground">Sem itens reservados</span>
+                        )}
+                      </div>
                     </div>
                     <span className="col-start-2 sm:col-start-auto">
                       <StatusBadge status={status} />
@@ -896,7 +958,20 @@ function EventsPage({
                 <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{place}</span>
                   <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{event.guest_count ?? "—"} convidados</span>
-                  <span className="flex items-center gap-1"><Package className="h-3.5 w-3.5" />{event.reserve_from && event.reserve_until ? `Reserva: ${formatDate(event.reserve_from)} a ${formatDate(event.reserve_until)}` : "Sem reserva do acervo"}</span>
+                  <span className="flex items-center gap-1"><Package className="h-3.5 w-3.5" />{event.reserve_from && event.reserve_until ? `Reserva do acervo: ${formatDate(event.reserve_from)} a ${formatDate(event.reserve_until)}` : "Sem itens reservados no acervo"}</span>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
+                  {event.reserve_from && event.reserve_until ? (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-brand/35 bg-sand/65 px-2 py-1 font-medium text-brand">
+                      <PackageCheck className="h-3.5 w-3.5" />
+                      Evento com reserva de acervo
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/45 px-2 py-1 text-muted-foreground">
+                      <Package className="h-3.5 w-3.5" />
+                      Evento sem reserva de acervo
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -3434,6 +3509,7 @@ function Dashboard() {
               openModal={openModal}
               announce={announce}
               dashboard={backend.dashboard}
+              events={backend.events}
               onPreview={previewProposal}
               onPdf={openPdf}
               meetings={backend.meetings}
