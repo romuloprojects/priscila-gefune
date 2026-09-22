@@ -21,7 +21,7 @@ async function getServerEntry(): Promise<ServerEntry> {
 const DEFAULT_N8N_WEBHOOK_BASE = "https://n8n.facilities-ai.com.br/webhook/atelier";
 
 function getN8nBaseUrl() {
-  const configured = process.env["N8N_WEBHOOK_BASE_URL"]?.trim();
+  const configured = process.env.N8N_WEBHOOK_BASE_URL?.trim();
   return (configured || DEFAULT_N8N_WEBHOOK_BASE).replace(/\/$/, "");
 }
 
@@ -30,11 +30,7 @@ function parseCookies(value: string | null) {
   for (const part of (value || "").split(";")) {
     const [rawKey, ...rest] = part.trim().split("=");
     if (!rawKey) continue;
-    try {
-      out[rawKey] = decodeURIComponent(rest.join("="));
-    } catch {
-      /* Ignore malformed cookies. */
-    }
+    out[rawKey] = decodeURIComponent(rest.join("="));
   }
   return out;
 }
@@ -56,13 +52,7 @@ async function callN8n(path: string, request: Request, token?: string): Promise<
   const method = request.method.toUpperCase();
   const hasBody = method !== "GET" && method !== "HEAD";
   const body = hasBody ? await request.arrayBuffer() : undefined;
-  return fetch(target, {
-    method,
-    headers,
-    ...(body !== undefined ? { body } : {}),
-    redirect: "manual",
-    cache: "no-store",
-  });
+  return fetch(target, { method, headers, body: hasBody ? body : undefined, redirect: "manual", cache: "no-store" });
 }
 
 type SessionPayload = {
@@ -73,18 +63,13 @@ type SessionPayload = {
 };
 
 async function getSession(request: Request, token: string): Promise<SessionPayload | null> {
-  const probe = new Request(new URL("/api/atelier/auth/session", request.url), {
-    method: "GET",
-    headers: { accept: "application/json" },
-  });
+  const probe = new Request(new URL("/api/atelier/auth/session", request.url), { method: "GET", headers: { accept: "application/json" } });
   try {
     const response = await callN8n("/auth/session", probe, token);
     if (!response.ok) return null;
-    const payload = (await response.json()) as SessionPayload;
+    const payload = await response.json() as SessionPayload;
     return payload.ok === true && payload.authenticated === true ? payload : null;
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
 
 const INVENTORY_ROLE_PATHS = new Set([
@@ -97,27 +82,14 @@ const INVENTORY_ROLE_PATHS = new Set([
 ]);
 
 function isAllowedForRole(role: string | undefined, suffix: string) {
-  if (role === "admin") return true;
-  return role === "inventory" && INVENTORY_ROLE_PATHS.has(suffix);
+  if (role !== "inventory") return true;
+  return INVENTORY_ROLE_PATHS.has(suffix);
 }
 
-async function sanitizeInventoryRequest(
-  request: Request,
-  suffix: string,
-  role: string | undefined,
-) {
-  if (
-    role !== "inventory" ||
-    !["/inventory", "/inventory-update"].includes(suffix) ||
-    request.method.toUpperCase() === "GET"
-  )
-    return request;
-  const body = (await request
-    .clone()
-    .json()
-    .catch(() => ({}))) as Record<string, unknown>;
-  delete body["default_unit_price"];
-  delete body["active"];
+async function sanitizeInventoryRequest(request: Request, suffix: string, role: string | undefined) {
+  if (role !== "inventory" || !["/inventory", "/inventory-update"].includes(suffix) || request.method.toUpperCase() === "GET") return request;
+  const body = await request.clone().json().catch(() => ({})) as Record<string, unknown>;
+  delete body.default_unit_price;
   return new Request(request.url, {
     method: request.method,
     headers: request.headers,
@@ -138,6 +110,7 @@ function stripCommercialInventoryFields(value: unknown): unknown {
   return value;
 }
 
+
 function safePdfFilenamePart(value: unknown, fallback = "Cliente") {
   const clean = String(value ?? fallback)
     .normalize("NFD")
@@ -150,29 +123,6 @@ function safePdfFilenamePart(value: unknown, fallback = "Cliente") {
 function pdfFilenameDate(value: unknown) {
   const match = String(value ?? "").match(/^(\d{4})-(\d{2})-(\d{2})/);
   return match ? `${match[3]}-${match[2]}-${match[1]}` : "sem-data";
-}
-
-function meetingPdfFilenameDate(value: unknown) {
-  const raw = String(value ?? "");
-  if (!raw) return "sem-data";
-  try {
-    const parsed = new Date(raw);
-    if (!Number.isNaN(parsed.getTime())) {
-      const parts = new Intl.DateTimeFormat("pt-BR", {
-        timeZone: "America/Sao_Paulo",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      }).formatToParts(parsed);
-      const day = parts.find((part) => part.type === "day")?.value;
-      const month = parts.find((part) => part.type === "month")?.value;
-      const year = parts.find((part) => part.type === "year")?.value;
-      if (day && month && year) return `${day}-${month}-${year}`;
-    }
-  } catch {
-    // Fallback abaixo mantém compatibilidade com strings ISO simples.
-  }
-  return pdfFilenameDate(raw);
 }
 
 function proposalPdfContentDisposition(filename: string) {
@@ -191,50 +141,20 @@ async function resolveProposalPdfFilename(request: Request, token: string) {
     const response = await callN8n("/proposal-detail", detailRequest, token);
     if (!response.ok) return null;
 
-    const payload = (await response.json()) as {
-      ok?: boolean;
-      client?: { name?: string };
-      data?: { recipient_name?: string; event_date_snapshot?: string };
-      event?: { event_date?: string };
-    };
+    const payload = await response.json() as any;
     if (!payload?.ok) return null;
 
-    const recipientName = payload?.client?.name || payload?.data?.recipient_name || "Cliente";
+    const recipientName =
+      payload?.client?.name ||
+      payload?.data?.recipient_name ||
+      "Cliente";
 
-    const eventDate = payload?.event?.event_date || payload?.data?.event_date_snapshot || "";
+    const eventDate =
+      payload?.event?.event_date ||
+      payload?.data?.event_date_snapshot ||
+      "";
 
     return `Proposta_${safePdfFilenamePart(recipientName)}_${pdfFilenameDate(eventDate)}.pdf`;
-  } catch {
-    return null;
-  }
-}
-
-async function resolveMeetingPdfFilename(request: Request, token: string) {
-  try {
-    const detailRequest = new Request(request.url, {
-      method: "GET",
-      headers: { accept: "application/json" },
-    });
-    const response = await callN8n("/meeting-detail", detailRequest, token);
-    if (!response.ok) return null;
-
-    type MeetingFilenameData = {
-      contact_name?: string | null;
-      client_name?: string | null;
-      meeting_at?: string | null;
-    };
-    const payload = (await response.json()) as {
-      ok?: boolean;
-      data?: MeetingFilenameData;
-      meeting?: MeetingFilenameData;
-    };
-    const meeting = payload?.data ?? payload?.meeting;
-    if (!payload?.ok || !meeting) return null;
-
-    const contactName = meeting.contact_name || meeting.client_name || "Cliente";
-    const meetingAt = meeting.meeting_at || "";
-
-    return `Relatorio_Reuniao_${safePdfFilenamePart(contactName)}_${meetingPdfFilenameDate(meetingAt)}.pdf`;
   } catch {
     return null;
   }
@@ -251,108 +171,50 @@ async function proxyAtelierApi(request: Request): Promise<Response | null> {
   const publicAuth = suffix === "/auth/login";
 
   if (!publicAuth && suffix !== "/auth/session" && !token) {
-    return Response.json(
-      { ok: false, code: "AUTH_REQUIRED", message: "Faça login para continuar." },
-      { status: 401, headers: { "cache-control": "no-store" } },
-    );
+    return Response.json({ ok: false, code: "AUTH_REQUIRED", message: "Faça login para continuar." }, { status: 401, headers: { "cache-control": "no-store" } });
   }
 
   let session: SessionPayload | null = null;
   if (!publicAuth && suffix !== "/auth/session") {
     session = await getSession(request, token);
     if (!session) {
-      return Response.json(
-        { ok: false, code: "SESSION_EXPIRED", message: "Sua sessão expirou. Entre novamente." },
-        {
-          status: 401,
-          headers: {
-            "cache-control": "no-store",
-            "set-cookie": `${SESSION_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`,
-          },
-        },
-      );
+      return Response.json({ ok: false, code: "SESSION_EXPIRED", message: "Sua sessão expirou. Entre novamente." }, { status: 401, headers: { "cache-control": "no-store", "set-cookie": `${SESSION_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0` } });
     }
     if (!isAllowedForRole(session.user?.role, suffix)) {
-      return Response.json(
-        { ok: false, code: "FORBIDDEN", message: "Seu usuário não possui acesso a esta área." },
-        { status: 403, headers: { "cache-control": "no-store" } },
-      );
+      return Response.json({ ok: false, code: "FORBIDDEN", message: "Seu usuário não possui acesso a esta área." }, { status: 403, headers: { "cache-control": "no-store" } });
     }
   }
 
   try {
     if (suffix === "/auth/login") {
       const upstream = await callN8n(suffix, request);
-      const payload = (await upstream.json()) as {
-        ok?: boolean;
-        token?: string;
-        remember?: boolean;
-        [key: string]: unknown;
-      };
-      if (
-        !upstream.ok ||
-        payload?.ok === false ||
-        typeof payload?.token !== "string" ||
-        !payload.token
-      ) {
-        return Response.json(payload, {
-          status: upstream.ok ? 401 : upstream.status,
-          headers: { "cache-control": "no-store" },
-        });
+      const payload = await upstream.json() as any;
+      if (!upstream.ok || payload?.ok === false || !payload?.token) {
+        return Response.json(payload, { status: upstream.ok ? 401 : upstream.status, headers: { "cache-control": "no-store" } });
       }
       const maxAge = payload.remember ? 60 * 60 * 24 * 30 : 60 * 60 * 12;
       const { token: _hidden, ...safe } = payload;
-      return Response.json(
-        { ...safe, authenticated: true },
-        {
-          headers: {
-            "cache-control": "no-store",
-            "set-cookie": `${SESSION_COOKIE}=${encodeURIComponent(payload.token)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`,
-          },
-        },
-      );
+      return Response.json({ ...safe, authenticated: true }, { headers: { "cache-control": "no-store", "set-cookie": `${SESSION_COOKIE}=${encodeURIComponent(payload.token)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}` } });
     }
 
     if (suffix === "/auth/session") {
-      if (!token)
-        return Response.json(
-          { ok: false, authenticated: false },
-          { status: 401, headers: { "cache-control": "no-store" } },
-        );
+      if (!token) return Response.json({ ok: false, authenticated: false }, { status: 401, headers: { "cache-control": "no-store" } });
       const upstream = await callN8n(suffix, request, token);
       const body = await upstream.text();
-      return new Response(body, {
-        status: upstream.ok ? 200 : upstream.status,
-        headers: { "content-type": "application/json", "cache-control": "no-store" },
-      });
+      return new Response(body, { status: upstream.ok ? 200 : upstream.status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
     }
 
     if (suffix === "/auth/logout") {
       const upstream = await callN8n(suffix, request, token);
       const body = await upstream.text();
-      return new Response(body || JSON.stringify({ ok: true }), {
-        status: 200,
-        headers: {
-          "content-type": "application/json",
-          "cache-control": "no-store",
-          "set-cookie": `${SESSION_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`,
-        },
-      });
+      return new Response(body || JSON.stringify({ ok: true }), { status: 200, headers: { "content-type": "application/json", "cache-control": "no-store", "set-cookie": `${SESSION_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0` } });
     }
 
     const role = session?.user?.role;
     const outboundRequest = await sanitizeInventoryRequest(request, suffix, role);
     const upstream = await callN8n(suffix, outboundRequest, token);
 
-    if (
-      role === "inventory" &&
-      [
-        "/inventory",
-        "/inventory-update",
-        "/inventory/availability",
-        "/inventory-movements",
-      ].includes(suffix)
-    ) {
+    if (role === "inventory" && ["/inventory", "/inventory-update", "/inventory/availability", "/inventory-movements"].includes(suffix)) {
       const contentType = upstream.headers.get("content-type") || "";
       if (contentType.includes("application/json")) {
         const payload = await upstream.json().catch(() => null);
@@ -377,30 +239,17 @@ async function proxyAtelierApi(request: Request): Promise<Response | null> {
       const dynamicFilename = await resolveProposalPdfFilename(request, token);
       const filename = dynamicFilename || "Proposta_Atelier_Priscila_Gefune.pdf";
       responseHeaders.set("content-disposition", proposalPdfContentDisposition(filename));
-    } else if (suffix.endsWith("/meeting-pdf") && upstream.ok) {
-      const dynamicFilename = await resolveMeetingPdfFilename(request, token);
-      const filename = dynamicFilename || "Relatorio_Reuniao_Atelier_Priscila_Gefune.pdf";
-      responseHeaders.set("content-disposition", proposalPdfContentDisposition(filename));
     } else if (upstreamDisposition) {
       responseHeaders.set("content-disposition", upstreamDisposition);
+    } else if (suffix.endsWith("/meeting-pdf")) {
+      responseHeaders.set("content-disposition", 'attachment; filename="relatorio-reuniao-atelier-priscila-gefune.pdf"');
     }
 
     responseHeaders.set("cache-control", "no-store");
-    return new Response(upstream.body, {
-      status: upstream.status,
-      statusText: upstream.statusText,
-      headers: responseHeaders,
-    });
+    return new Response(upstream.body, { status: upstream.status, statusText: upstream.statusText, headers: responseHeaders });
   } catch (error) {
     console.error("Falha ao acessar o serviço da aplicação:", error);
-    return Response.json(
-      {
-        ok: false,
-        code: "SERVICE_UNAVAILABLE",
-        message: "Não foi possível acessar o serviço da aplicação.",
-      },
-      { status: 502, headers: { "cache-control": "no-store" } },
-    );
+    return Response.json({ ok: false, code: "SERVICE_UNAVAILABLE", message: "Não foi possível acessar o serviço da aplicação." }, { status: 502, headers: { "cache-control": "no-store" } });
   }
 }
 

@@ -4,9 +4,7 @@
  * O login não depende de utilities Tailwind para o layout crítico.
  */
 .apg-login-v84,
-.apg-login-v84 * {
-  box-sizing: border-box;
-}
+.apg-login-v84 * { box-sizing: border-box; }
 
 .apg-login-v84 {
   width: 100%;
@@ -18,13 +16,7 @@
   overflow: hidden;
   background: #0d0c0a;
   color: #eee6da;
-  font-family:
-    "Manrope",
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  font-family: "Manrope", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .apg-login-v84-hero {
@@ -33,14 +25,14 @@
   height: 100%;
   overflow: hidden;
   background: #21180f;
-  border-right: 1px solid rgba(212, 176, 106, 0.26);
+  border-right: 1px solid rgba(212, 176, 106, .26);
 }
 .apg-login-v84-hero::after {
   content: "";
   position: absolute;
   inset: 0 0 0 auto;
   width: 42px;
-  background: linear-gradient(90deg, transparent, rgba(13, 12, 10, 0.36));
+  background: linear-gradient(90deg, transparent, rgba(13,12,10,.36));
   pointer-events: none;
 }
 .apg-login-v84-hero img {
@@ -60,13 +52,14 @@
   height: 100%;
   overflow: hidden;
   background:
-    radial-gradient(circle at 100% 0%, rgba(196, 151, 77, 0.11), transparent 27rem),
-    radial-gradient(circle at 0% 100%, rgba(196, 151, 77, 0.07), transparent 24rem), #0d0c0a;
+    radial-gradient(circle at 100% 0%, rgba(196,151,77,.11), transparent 27rem),
+    radial-gradient(circle at 0% 100%, rgba(196,151,77,.07), transparent 24rem),
+    #0d0c0a;
 }
 .apg-login-v84-frame {
   position: absolute;
   inset: 4.1%;
-  border: 1px solid rgba(208, 176, 109, 0.4);
+  border: 1px solid rgba(208,176,109,.40);
   border-radius: 26px;
   pointer-events: none;
 }
@@ -85,22 +78,17 @@
   margin: auto;
   padding: 18px 6px 22px;
 }
-.apg-login-v84-head {
-  text-align: center;
-}
+.apg-login-v84-head { text-align: center; }
 .apg-login-v84-eyebrow,
 .apg-login-v84-brand {
   margin: 0;
   color: #d4b06a;
   text-transform: uppercase;
   font-weight: 600;
-  letter-spacing: 0.34em;
+  letter-spacing: .34em;
   font-size: 11px;
 }
-.apg-login-v84-brand {
-  margin-top: 8px;
-  font-size: 12px;
-}
+.apg-login-v84-brand { margin-top: 8px; font-size: 12px; }
 .apg-login-v84-divider {
   width: 145px;
   margin: 22px auto 30px;
@@ -109,21 +97,14 @@
   align-items: center;
   color: #d4b06a;
 }
-.apg-login-v84-divider span {
-  height: 1px;
-  background: #9b7c49;
-  flex: 1;
-}
-.apg-login-v84-divider b {
-  font-size: 18px;
-  font-weight: 400;
-}
+.apg-login-v84-divider span { height: 1px; background: #9b7c49; flex: 1; }
+.apg-login-v84-divider b { font-size: 18px; font-weight: 400; }
 .apg-login-v84-head h1 {
   margin: 0;
   font-family: "Cormorant Garamond", Georgia, serif;
   font-size: clamp(50px, 4.2vw, 66px);
   font-weight: 500;
-  line-height: 0.96;
+  line-height: .96;
   color: #f4eadc;
 }
 .apg-login-v84-head > p:last-child {
@@ -144,9 +125,7 @@
   font-weight: 600;
   color: #eee6da;
 }
-.apg-login-v84-input {
-  position: relative;
-}
+.apg-login-v84-input { position: relative; }
 .apg-login-v84-input > svg {
   position: absolute;
   left: 18px;
@@ -169,18 +148,13 @@
   font: inherit;
   font-size: 15px;
   outline: none;
-  transition:
-    border-color 0.18s ease,
-    box-shadow 0.18s ease,
-    background 0.18s ease;
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
 }
-.apg-login-v84-input input::placeholder {
-  color: #887f74;
-}
+.apg-login-v84-input input::placeholder { color: #887f74; }
 .apg-login-v84-input input:focus {
   border-color: #d4b06a;
   background: #171410;
-  box-shadow: 0 0 0 3px rgba(212, 176, 106, 0.14);
+  box-shadow: 0 0 0 3px rgba(212,176,106,.14);
 }
 .apg-login-v84-eye {
   position: absolute;
@@ -197,13 +171,8 @@
   color: #b4a58f;
   cursor: pointer;
 }
-.apg-login-v84-eye:hover {
-  background: rgba(212, 176, 106, 0.09);
-}
-.apg-login-v84-eye svg {
-  width: 20px;
-  height: 20px;
-}
+.apg-login-v84-eye:hover { background: rgba(212,176,106,.09); }
+.apg-login-v84-eye svg { width: 20px; height: 20px; }
 .apg-login-v84-options {
   margin-top: 21px;
   display: flex;
@@ -213,17 +182,8 @@
   color: #b5aa9c;
   font-size: 13px;
 }
-.apg-login-v84-options label {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  cursor: pointer;
-}
-.apg-login-v84-options input {
-  width: 18px;
-  height: 18px;
-  accent-color: #c69c55;
-}
+.apg-login-v84-options label { display: flex; align-items: center; gap: 9px; cursor: pointer; }
+.apg-login-v84-options input { width: 18px; height: 18px; accent-color: #c69c55; }
 .apg-login-v84-options button {
   border: 0;
   background: none;
@@ -254,30 +214,18 @@
   gap: 14px;
   border: 0;
   border-radius: 12px;
-  background: linear-gradient(180deg, #e2bf7a, #b88942);
+  background: linear-gradient(180deg,#e2bf7a,#b88942);
   color: #17110a;
   font: inherit;
   font-size: 19px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 10px 28px rgba(185, 137, 66, 0.24);
-  transition:
-    background 0.18s ease,
-    transform 0.18s ease;
+  box-shadow: 0 10px 28px rgba(185,137,66,.24);
+  transition: background .18s ease, transform .18s ease;
 }
-.apg-login-v84-submit:hover {
-  background: #c89c55;
-  transform: translateY(-1px);
-}
-.apg-login-v84-submit:disabled {
-  opacity: 0.6;
-  cursor: wait;
-  transform: none;
-}
-.apg-login-v84-submit svg {
-  width: 20px;
-  height: 20px;
-}
+.apg-login-v84-submit:hover { background: #c89c55; transform: translateY(-1px); }
+.apg-login-v84-submit:disabled { opacity: .6; cursor: wait; transform: none; }
+.apg-login-v84-submit svg { width: 20px; height: 20px; }
 .apg-login-v84-foot {
   margin-top: 30px;
   display: flex;
@@ -287,59 +235,24 @@
   color: #8f8477;
   font-size: 11px;
 }
-.apg-login-v84-foot span {
-  width: 46px;
-  height: 1px;
-  background: #4a3a29;
-}
-.apg-login-v84-foot svg {
-  width: 14px;
-  height: 14px;
-  color: #b88942;
-  flex: 0 0 auto;
-}
-.apg-login-v84-foot em {
-  font-style: normal;
-  text-align: center;
-}
+.apg-login-v84-foot span { width: 46px; height: 1px; background: #4a3a29; }
+.apg-login-v84-foot svg { width: 14px; height: 14px; color: #b88942; flex: 0 0 auto; }
+.apg-login-v84-foot em { font-style: normal; text-align: center; }
 
 /* ANCAR pattern: desktop/landscape locked to viewport, scroll only in form pane when height is short. */
 @media (max-height: 760px) and (min-width: 900px) {
-  .apg-login-v84-scroll {
-    align-items: flex-start;
-    padding-top: 28px;
-    padding-bottom: 28px;
-  }
-  .apg-login-v84-form {
-    padding-top: 8px;
-  }
-  .apg-login-v84-divider {
-    margin-top: 14px;
-    margin-bottom: 20px;
-  }
-  .apg-login-v84-fields {
-    margin-top: 30px;
-    gap: 16px;
-  }
-  .apg-login-v84-input input {
-    height: 54px;
-  }
-  .apg-login-v84-submit {
-    height: 56px;
-    margin-top: 20px;
-  }
-  .apg-login-v84-foot {
-    margin-top: 18px;
-  }
+  .apg-login-v84-scroll { align-items: flex-start; padding-top: 28px; padding-bottom: 28px; }
+  .apg-login-v84-form { padding-top: 8px; }
+  .apg-login-v84-divider { margin-top: 14px; margin-bottom: 20px; }
+  .apg-login-v84-fields { margin-top: 30px; gap: 16px; }
+  .apg-login-v84-input input { height: 54px; }
+  .apg-login-v84-submit { height: 56px; margin-top: 20px; }
+  .apg-login-v84-foot { margin-top: 18px; }
 }
 
 @media (min-width: 900px) and (max-width: 1180px) {
-  .apg-login-v84 {
-    grid-template-columns: minmax(0, 52%) minmax(430px, 48%);
-  }
-  .apg-login-v84-scroll {
-    padding: 34px 30px;
-  }
+  .apg-login-v84 { grid-template-columns: minmax(0, 52%) minmax(430px, 48%); }
+  .apg-login-v84-scroll { padding: 34px 30px; }
 }
 
 /* Tablet portrait / mobile: single clean panel, same behavior used in ANCAR responsive login. */
@@ -350,45 +263,22 @@
     display: block;
     overflow: visible;
   }
-  .apg-login-v84-hero {
-    display: none;
-  }
-  .apg-login-v84-panel {
-    min-height: 100svh;
-    height: auto;
-    overflow: visible;
-  }
+  .apg-login-v84-hero { display: none; }
+  .apg-login-v84-panel { min-height: 100svh; height: auto; overflow: visible; }
   .apg-login-v84-scroll {
     position: relative;
     min-height: 100svh;
     overflow: visible;
     padding: 52px 30px;
   }
-  .apg-login-v84-frame {
-    inset: 18px;
-    border-radius: 22px;
-  }
-  .apg-login-v84-form {
-    width: min(100%, 520px);
-  }
+  .apg-login-v84-frame { inset: 18px; border-radius: 22px; }
+  .apg-login-v84-form { width: min(100%, 520px); }
 }
 
 @media (max-width: 520px) {
-  .apg-login-v84-scroll {
-    padding: 42px 24px;
-  }
-  .apg-login-v84-form {
-    padding-left: 6px;
-    padding-right: 6px;
-  }
-  .apg-login-v84-head h1 {
-    font-size: 48px;
-  }
-  .apg-login-v84-options {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-  .apg-login-v84-foot span {
-    width: 22px;
-  }
+  .apg-login-v84-scroll { padding: 42px 24px; }
+  .apg-login-v84-form { padding-left: 6px; padding-right: 6px; }
+  .apg-login-v84-head h1 { font-size: 48px; }
+  .apg-login-v84-options { align-items: flex-start; flex-direction: column; }
+  .apg-login-v84-foot span { width: 22px; }
 }
